@@ -1,0 +1,42 @@
+#tool-area {
+  width: 340px;
+  height: 580px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+#tool-area-btns {
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+#maskingBtn {
+  background-color: red;
+  color: #ffffff;
+  padding: 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+#brush-eraser-btns {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 110px;
+  cursor: pointer;
+}
+
+#b-btn {
+  cursor: pointer;
+}
+
+#e-btn {
+  cursor: pointer;
+}

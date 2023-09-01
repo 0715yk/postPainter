@@ -1,0 +1,59 @@
+#layer {
+  display: flex;
+  width: 1276px;
+  height: 732px;
+  background-color: #17191c;
+  display: flex;
+  flex-direction: column;
+}
+
+#horizontal-box {
+  display: flex;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#wizardBtn {
+  width: 132px;
+  height: 40px;
+  border-radius: 8px;
+  padding: 10px, 16px;
+
+  outline: none;
+  background-color: #212328;
+  border: 1px solid #31333a;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 300px;
+}
+
+#size {
+  width: 132px;
+  height: 40px;
+  border-radius: 8px;
+  padding: 10px, 16px;
+  text-align: center;
+
+  background-color: #212328;
+  border: 1px solid #31333a;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}

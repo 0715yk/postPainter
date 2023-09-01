@@ -1,0 +1,56 @@
+#header {
+  color: white;
+  height: 70px;
+  border-bottom: 1px solid grey;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 20px;
+  padding-left: 24px;
+  background-color: #17191c;
+}
+
+#title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+#exportBtn {
+  outline: none;
+  background-color: #0d99ff;
+  color: white;
+  border-radius: 6px;
+  padding: 12px, 14px;
+  gap: 4px;
+  width: 102px;
+  height: 42px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  box-sizing: content-box;
+  border: none;
+  cursor: pointer;
+}
+
+#closeBtn {
+  outline: none;
+  background-color: #31333a;
+  color: white;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+}
+
+#btnGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 160px;
+}
