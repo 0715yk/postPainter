@@ -11,14 +11,14 @@ export default function Tool() {
     const width = (e.target as HTMLInputElement).value;
     painter.setStrokeWidth(width);
   };
-  const [mode, setMode] = React.useState(null);
+  const [mode, setMode] = React.useState("edit");
   React.useEffect(() => {
     painter.setDrawingMode(mode);
   }, [mode]);
 
   const changeToAnotherMode = () => {
-    painter.setDrawingMode(null);
-    setMode(null);
+    painter.setDrawingMode("edit");
+    setMode("edit");
   };
 
   return (
@@ -28,25 +28,35 @@ export default function Tool() {
         <div>
           1) Turning On/Off Masking mode:
           <button
+            disabled={mode === "visibility" ? true : false}
             id="maskingBtn"
             onClick={changeToAnotherMode}
-            style={{ background: mode === null ? "green" : "red" }}
+            style={{
+              cursor: mode === "visibility" ? "not-allowed" : "pointer",
+              background:
+                mode === "edit"
+                  ? "green"
+                  : mode === "visibility"
+                  ? "grey"
+                  : "red",
+            }}
           >
-            편집 모드
+            {mode === "edit" ? "편집 모드 ON" : "편집 모드 OFF"}
           </button>
         </div>
         <div>
           2) Selecting brush/eraser :
           <div id="brush-eraser-btns">
             <button
-              disabled={mode === "dummyMode" ? true : false}
+              disabled={mode === "visibility" ? true : false}
               style={{
+                cursor: mode === "visibility" ? "not-allowed" : "pointer",
                 background: mode === "brush" ? "yellowGreen" : "none",
               }}
               id="b-btn"
               onClick={() => {
                 setMode((prev) => {
-                  if (prev === "brush") return null;
+                  if (prev === "brush") return "edit";
                   else return "brush";
                 });
               }}
@@ -54,14 +64,15 @@ export default function Tool() {
               brush
             </button>
             <button
-              disabled={mode === "dummyMode" ? true : false}
+              disabled={mode === "visibility" ? true : false}
               style={{
+                cursor: mode === "visibility" ? "not-allowed" : "pointer",
                 background: mode === "eraser" ? "yellowGreen" : "none",
               }}
               id="e-btn"
               onClick={() => {
                 setMode((prev) => {
-                  if (prev === "eraser") return null;
+                  if (prev === "eraser") return "edit";
                   else return "eraser";
                 });
               }}
@@ -104,14 +115,22 @@ export default function Tool() {
           <input
             defaultChecked={true}
             type="checkbox"
+            checked={mode === "visibility" ? false : true}
             onChange={(e) => {
               painter.setVisibility(e.target.checked);
-              setMode(e.target.checked ? null : "visibility");
+              setMode(e.target.checked ? "edit" : "visibility");
             }}
           />
-          {mode === "dummyMode" ? "눈 감은 상태" : "눈 뜬 상태"}
+          {mode === "visibility" ? "눈 감은 상태" : "눈 뜬 상태"}
         </div>
         <br />
+        <div className="undo_redo_area">
+          <div>6) Undo & Redo</div>
+          <div className="undo_redo_btns">
+            <button onClick={() => painter.undo()}>&lt;</button>
+            <button onClick={() => painter.redo()}>&gt;</button>
+          </div>
+        </div>
       </div>
     </div>
   );

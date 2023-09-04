@@ -3,9 +3,8 @@ import { useRef } from "react";
 import "./style.css";
 import { painter } from "../libs";
 
-function Container({ size }) {
+function Container({ size, imgSrc, setImgSrc }) {
   const containerRef = useRef<null | HTMLDivElement>(null);
-  const [imgSrc, setImgSrc] = React.useState(null);
 
   const getImageSource = (e) => {
     const file = e.target.files[0];

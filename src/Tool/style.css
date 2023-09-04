@@ -40,3 +40,14 @@
 #e-btn {
   cursor: pointer;
 }
+
+.undo_redo_btns {
+  display: flex;
+  justify-content: space-between;
+  gap: 25px;
+}
+
+.undo_redo_area {
+  display: flex;
+  gap: 25px;
+}

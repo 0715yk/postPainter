@@ -58,8 +58,27 @@ const paintingTool = function () {
       ? { width: containerWidth, height: containerWidth / outputRatio }
       : { width: containerHeight * outputRatio, height: containerHeight };
   };
+  let currentLine = null; // 현재 그리는 선을 저장하기 위한 변수
 
+  const undoStack = []; // undo를 위한 스택
+  const redoStack = []; // redo를 위한 스택
   return {
+    undo() {
+      if (undoStack.length > 0) {
+        const lineToRemove = undoStack.pop();
+        redoStack.push(lineToRemove);
+        lineToRemove.destroy();
+        drawLayer.batchDraw();
+      }
+    },
+    redo() {
+      if (redoStack.length > 0) {
+        const lineToRedraw = redoStack.pop();
+        undoStack.push(lineToRedraw);
+        drawLayer.add(lineToRedraw);
+        drawLayer.batchDraw();
+      }
+    },
     init: ({
       id,
       brushOption,
@@ -82,7 +101,6 @@ const paintingTool = function () {
       stage.add(imageLayer);
       stage.add(drawLayer);
 
-      let lastLine;
       let isPaint = false;
 
       if (brushOption) {
@@ -97,7 +115,7 @@ const paintingTool = function () {
         const x = (stage.getPointerPosition().x - drawLayer.x()) / scale;
         const y = (stage.getPointerPosition().y - drawLayer.y()) / scale;
 
-        lastLine = new Konva.Line({
+        currentLine = new Konva.Line({
           stroke: brushOptions?.color,
           strokeWidth: brushOptions?.strokeWidth / scale,
           globalCompositeOperation:
@@ -107,7 +125,7 @@ const paintingTool = function () {
           points: [x, y, x, y],
         });
 
-        drawLayer.add(lastLine);
+        drawLayer.add(currentLine);
       });
 
       stage.on("mousemove", ({ evt }) => {
@@ -119,12 +137,14 @@ const paintingTool = function () {
         const x = (stage.getPointerPosition().x - drawLayer.x()) / scale;
         const y = (stage.getPointerPosition().y - drawLayer.y()) / scale;
 
-        lastLine.points(lastLine.points().concat([x, y]));
+        currentLine.points(currentLine.points().concat([x, y]));
       });
 
       stage.on("mouseup", () => {
         if (!drawingModeOn) return;
         isPaint = false;
+
+        undoStack.push(currentLine);
       });
     },
 
@@ -222,7 +242,7 @@ const paintingTool = function () {
 
     setStrokeColor(color: string) {
       brushOptions.color = color;
-      if (!drawingModeOn) return;
+      if (!drawingModeOn || drawingMode === "eraser") return;
       if (stage !== null && brushOptions.strokeWidth !== null) {
         stage.container().style.cursor = getDrawCursor(
           brushOptions.strokeWidth,
@@ -247,7 +267,8 @@ const paintingTool = function () {
       }
     },
     setDrawingMode(mode: string) {
-      if (mode === null) {
+      console.log(mode);
+      if (mode === "edit") {
         drawingModeOn = false;
         stage.container().style.cursor = "default";
         return;
@@ -256,7 +277,6 @@ const paintingTool = function () {
       }
       drawingModeOn = true;
       drawingMode = mode;
-
       if (mode === "eraser") {
         if (stage !== null && drawingModeOn) {
           stage.container().style.cursor = getDrawCursor(
@@ -335,3 +355,9 @@ const paintingTool = function () {
 const painter = paintingTool();
 
 export { painter };
+
+// 모듈 폴리싱
+// 뒤로가기, 앞으로 가기
+// 기획서 재검토
+// 모듈 documentation 작성
+// inpainting 로직
