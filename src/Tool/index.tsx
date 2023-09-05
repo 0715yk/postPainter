@@ -2,7 +2,7 @@ import * as React from "react";
 import { painter } from "../libs";
 import "./style.css";
 
-export default function Tool() {
+export default function Tool({ mode, setMode, imgSrc }) {
   const setStrokeColor = (e) => {
     const color = (e.target as HTMLSelectElement).value;
     painter.setStrokeColor(color);
@@ -11,7 +11,7 @@ export default function Tool() {
     const width = (e.target as HTMLInputElement).value;
     painter.setStrokeWidth(width);
   };
-  const [mode, setMode] = React.useState("edit");
+
   React.useEffect(() => {
     painter.setDrawingMode(mode);
   }, [mode]);
@@ -22,7 +22,7 @@ export default function Tool() {
   };
 
   return (
-    <div id="tool-area">
+    <div id="tool-area" style={{ display: imgSrc === null ? "none" : "block" }}>
       <h2>Drawing Control Menu</h2>
       <div id="tool-area-btns">
         <div>

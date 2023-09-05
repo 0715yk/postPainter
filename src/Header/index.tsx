@@ -5,8 +5,8 @@ import { painter } from "../libs";
 
 export default function Header({ setModalOn }) {
   const [imgSrc, setImgSrc] = React.useState(null);
-  const exportImage = async () => {
-    await painter.exportImagePrompt((src) => {
+  const exportImage = () => {
+    painter.exportImagePrompt((src) => {
       setImgSrc(src);
     });
   };

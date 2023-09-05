@@ -6,6 +6,7 @@ function getDrawCursor(
   strokeColor?: string
 ) {
   // 문제 3번
+
   const circle = `
       <svg
         height="${strokeWidth}"
@@ -24,6 +25,7 @@ function getDrawCursor(
         />
       </svg>
     `;
+
   return `url(data:image/svg+xml;base64,${window.btoa(circle)}) ${Math.ceil(
     strokeWidth / 2
   )} ${Math.ceil(strokeWidth / 2)}, pointer`;
@@ -59,10 +61,17 @@ const paintingTool = function () {
       : { width: containerHeight * outputRatio, height: containerHeight };
   };
   let currentLine = null; // 현재 그리는 선을 저장하기 위한 변수
-
+  const stageInform = {
+    id: null,
+  };
   const undoStack = []; // undo를 위한 스택
   const redoStack = []; // redo를 위한 스택
   return {
+    changeLineColor(color: string) {
+      drawLayer.children.forEach((el: Konva.Line) => {
+        el.stroke(color);
+      });
+    },
     undo() {
       if (undoStack.length > 0) {
         const lineToRemove = undoStack.pop();
@@ -79,7 +88,7 @@ const paintingTool = function () {
         drawLayer.batchDraw();
       }
     },
-    init: ({
+    init: function ({
       id,
       brushOption,
       width,
@@ -89,7 +98,8 @@ const paintingTool = function () {
       brushOption?: { strokeWidth: number; color: string };
       width?: number;
       height?: number;
-    }) => {
+    }) {
+      stageInform.id = id;
       stage = new Konva.Stage({
         container: id,
         width,
@@ -143,19 +153,19 @@ const paintingTool = function () {
       stage.on("mouseup", () => {
         if (!drawingModeOn) return;
         isPaint = false;
-
+        redoStack.length = 0;
         undoStack.push(currentLine);
       });
     },
 
     // 이미지 불러오기
-    importImage: ({
+    importImage({
       src,
       containerWidth,
       containerHeight,
       selectedWidth,
       selectedHeight,
-    }) => {
+    }) {
       const imageElement = new Image();
 
       imageElement.onload = () => {
@@ -267,7 +277,6 @@ const paintingTool = function () {
       }
     },
     setDrawingMode(mode: string) {
-      console.log(mode);
       if (mode === "edit") {
         drawingModeOn = false;
         stage.container().style.cursor = "default";
@@ -302,7 +311,18 @@ const paintingTool = function () {
       }
       this.setDrawLayer(status);
     },
-
+    deleteImage() {
+      drawLayer.destroyChildren();
+      imageLayer.destroyChildren();
+      undoStack.length = 0;
+      redoStack.length = 0;
+    },
+    changeImage() {
+      drawLayer.destroyChildren();
+      imageLayer.destroyChildren();
+      undoStack.length = 0;
+      redoStack.length = 0;
+    },
     setDrawLayer(status: boolean) {
       if (status) {
         let lastLine;
@@ -357,7 +377,6 @@ const painter = paintingTool();
 export { painter };
 
 // 모듈 폴리싱
-// 뒤로가기, 앞으로 가기
-// 기획서 재검토
+
 // 모듈 documentation 작성
 // inpainting 로직
