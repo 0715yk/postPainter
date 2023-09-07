@@ -33,16 +33,6 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
       }
     };
   };
-  React.useEffect(() => {
-    const [selectedWidth, selectedHeight] = size
-      .split(" x ")
-      .map((n) => parseInt(n));
-    painter.init({
-      id: "canvas",
-      width: selectedWidth,
-      height: selectedHeight,
-    });
-  }, []);
 
   React.useEffect(() => {
     if (imgSrc !== null && containerRef !== null) {
@@ -51,8 +41,7 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
         .map((n) => parseInt(n));
       painter.importImage({
         src: imgSrc,
-
-        containerWidth: 580, // 문제 2번
+        containerWidth: 580,
         containerHeight: 580,
         selectedWidth,
         selectedHeight,

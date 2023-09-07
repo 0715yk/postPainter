@@ -16,65 +16,55 @@ export default function Tool({ mode, setMode, imgSrc }) {
     painter.setDrawingMode(mode);
   }, [mode]);
 
-  const changeToAnotherMode = () => {
-    painter.setDrawingMode("edit");
-    setMode("edit");
-  };
+  // const changeToAnotherMode = () => {
+  //   painter.setDrawingMode("edit");
+  //   setMode("edit");
+  // };
 
   return (
     <div id="tool-area" style={{ display: imgSrc === null ? "none" : "block" }}>
       <h2>Drawing Control Menu</h2>
       <div id="tool-area-btns">
-        <div>
+        {/* <div>
           1) Turning On/Off Masking mode:
           <button
-            disabled={mode === "visibility" ? true : false}
+            disabled={mode === "off" ? true : false}
             id="maskingBtn"
             onClick={changeToAnotherMode}
             style={{
-              cursor: mode === "visibility" ? "not-allowed" : "pointer",
+              cursor: mode === "off" ? "not-allowed" : "pointer",
               background:
-                mode === "edit"
-                  ? "green"
-                  : mode === "visibility"
-                  ? "grey"
-                  : "red",
+                mode === "edit" ? "green" : mode === "off" ? "grey" : "red",
             }}
           >
             {mode === "edit" ? "편집 모드 ON" : "편집 모드 OFF"}
           </button>
-        </div>
+        </div> */}
         <div>
           2) Selecting brush/eraser :
           <div id="brush-eraser-btns">
             <button
-              disabled={mode === "visibility" ? true : false}
+              disabled={mode === "off" ? true : false}
               style={{
-                cursor: mode === "visibility" ? "not-allowed" : "pointer",
+                cursor: mode === "off" ? "not-allowed" : "pointer",
                 background: mode === "brush" ? "yellowGreen" : "none",
               }}
               id="b-btn"
               onClick={() => {
-                setMode((prev) => {
-                  if (prev === "brush") return "edit";
-                  else return "brush";
-                });
+                setMode("brush");
               }}
             >
               brush
             </button>
             <button
-              disabled={mode === "visibility" ? true : false}
+              disabled={mode === "off" ? true : false}
               style={{
-                cursor: mode === "visibility" ? "not-allowed" : "pointer",
+                cursor: mode === "off" ? "not-allowed" : "pointer",
                 background: mode === "eraser" ? "yellowGreen" : "none",
               }}
               id="e-btn"
               onClick={() => {
-                setMode((prev) => {
-                  if (prev === "eraser") return "edit";
-                  else return "eraser";
-                });
+                setMode("eraser");
               }}
             >
               eraser
@@ -115,13 +105,12 @@ export default function Tool({ mode, setMode, imgSrc }) {
           <input
             defaultChecked={true}
             type="checkbox"
-            checked={mode === "visibility" ? false : true}
+            checked={mode === "off" ? false : true}
             onChange={(e) => {
-              painter.setVisibility(e.target.checked);
-              setMode(e.target.checked ? "edit" : "visibility");
+              setMode(e.target.checked ? "brush" : "off");
             }}
           />
-          {mode === "visibility" ? "눈 감은 상태" : "눈 뜬 상태"}
+          {mode === "off" ? "눈 감은 상태" : "눈 뜬 상태"}
         </div>
         <br />
         <div className="undo_redo_area">
