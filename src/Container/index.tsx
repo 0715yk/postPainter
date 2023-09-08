@@ -39,6 +39,7 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
       const [selectedWidth, selectedHeight] = size
         .split(" x ")
         .map((n) => parseInt(n));
+
       painter.importImage({
         src: imgSrc,
         containerWidth: 580,
@@ -46,6 +47,8 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
         selectedWidth,
         selectedHeight,
       });
+      const localStorage = window.localStorage;
+      localStorage.setItem("imgSrc", imgSrc);
     }
   }, [size, imgSrc]);
 
@@ -56,6 +59,13 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
       setHoverMode(false);
     }
   }, [mode, imgSrc]);
+
+  React.useEffect(() => {
+    const imgSource = localStorage.getItem("imgSrc");
+    if (imgSource) {
+      setImgSrc(imgSource);
+    }
+  }, []);
 
   return (
     <div ref={containerRef} id="container">

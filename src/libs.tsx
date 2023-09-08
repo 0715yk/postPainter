@@ -1,466 +1,506 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 // import Konva from "konva";
-import imagePrompt from "image-prompt";
+// import imagePrompt from "image-prompt";
 
-export { imagePrompt as painter };
+// export { imagePrompt as painter };
 // import Konva from "konva";
 
-// import Konva from "konva";
+import Konva from "konva";
 
-// export function getDrawCursor(
-//   strokeWidth: number,
-//   brushColor: string,
-//   strokeColor?: string
-// ) {
-//   const circle = `
-//       <svg
-//         height="${strokeWidth}"
-//         fill="${brushColor}"
-//         viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
-//         width="${strokeWidth}"
-//         xmlns="http://www.w3.org/2000/svg"
-//         stroke="${strokeColor ? strokeColor : "black"}"
-//       >
-//         <circle
-//           cx="50%"
-//           cy="50%"
-//           r="${strokeWidth}"
-//           fill="${brushColor}"
-//           stroke="${strokeColor ? strokeColor : "black"}"
-//         />
-//       </svg>
-//     `;
+export function getDrawCursor(
+  strokeWidth: number,
+  brushColor: string,
+  strokeColor?: string
+) {
+  const circle = `
+      <svg
+        height="${strokeWidth}"
+        fill="${brushColor}"
+        viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
+        width="${strokeWidth}"
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="${strokeColor ? strokeColor : "black"}"
+      >
+        <circle
+          cx="50%"
+          cy="50%"
+          r="${strokeWidth}"    
+          fill="${brushColor}"
+          stroke="${strokeColor ? strokeColor : "black"}"
+        />
+      </svg>
+    `;
 
-//   return `url(data:image/svg+xml;base64,${window.btoa(circle)}) ${Math.ceil(
-//     strokeWidth / 2
-//   )} ${Math.ceil(strokeWidth / 2)}, pointer`;
-// }
+  return `url(data:image/svg+xml;base64,${window.btoa(circle)}) ${Math.ceil(
+    strokeWidth / 2
+  )} ${Math.ceil(strokeWidth / 2)}, pointer`;
+}
 
-// export function dataURItoBlob(dataURI: string) {
-//   const byteString = window.atob(dataURI.split(",")[1]);
-//   const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
-//   const ab = new ArrayBuffer(byteString.length);
-//   const ia = new Uint8Array(ab);
-//   for (let i = 0; i < byteString.length; i++) {
-//     ia[i] = byteString.charCodeAt(i);
-//   }
+export function dataURItoBlob(dataURI: string) {
+  const byteString = window.atob(dataURI.split(",")[1]);
+  const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
 
-//   const bb = new Blob([ab], { type: mimeString });
-//   return bb;
-// }
+  const bb = new Blob([ab], { type: mimeString });
+  return bb;
+}
 
-// export function getContainSize(
-//   containerWidth: number,
-//   containerHeight: number,
-//   outputWidth: number,
-//   outputHeight: number
-// ) {
-//   const containerRatio = containerWidth / containerHeight;
-//   const outputRatio = outputWidth / outputHeight;
-//   return containerRatio < outputRatio
-//     ? { width: containerWidth, height: containerWidth / outputRatio }
-//     : { width: containerHeight * outputRatio, height: containerHeight };
-// }
+export function getContainSize(
+  containerWidth: number,
+  containerHeight: number,
+  outputWidth: number,
+  outputHeight: number
+) {
+  const containerRatio = containerWidth / containerHeight;
+  const outputRatio = outputWidth / outputHeight;
+  return containerRatio < outputRatio
+    ? { width: containerWidth, height: containerWidth / outputRatio }
+    : { width: containerHeight * outputRatio, height: containerHeight };
+}
 
-// export namespace Event {
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   export type CallbackTypes = Record<string, (...args: any[]) => void>;
+export namespace Event {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export type CallbackTypes = Record<string, (...args: any[]) => void>;
 
-//   export type Events<T extends CallbackTypes> = keyof T;
-//   export type Callback<T extends CallbackTypes, E extends Events<T>> = T[E];
+  export type Events<T extends CallbackTypes> = keyof T;
+  export type Callback<T extends CallbackTypes, E extends Events<T>> = T[E];
 
-//   export type CallbackArgs<
-//     E extends Events<T>,
-//     T extends CallbackTypes
-//   > = Parameters<T[E]>;
+  export type CallbackArgs<
+    E extends Events<T>,
+    T extends CallbackTypes
+  > = Parameters<T[E]>;
 
-//   export type Listeners<T extends CallbackTypes> = {
-//     [E in Events<T>]?: Array<T[E]>;
-//   };
-// }
+  export type Listeners<T extends CallbackTypes> = {
+    [E in Events<T>]?: Array<T[E]>;
+  };
+}
 
-// export class EventListeners<T extends Event.CallbackTypes> {
-//   private _listeners: Event.Listeners<T>;
+export class EventListeners<T extends Event.CallbackTypes> {
+  private _listeners: Event.Listeners<T>;
 
-//   constructor() {
-//     this._listeners = {};
-//   }
+  constructor() {
+    this._listeners = {};
+  }
 
-//   addEventListener<E extends Event.Events<T>>(event: E, callback: T[E]) {
-//     if (!(event in this._listeners)) {
-//       this._listeners[event] = [];
-//     }
-//     this._listeners[event]?.push(callback);
-//   }
+  addEventListener<E extends Event.Events<T>>(event: E, callback: T[E]) {
+    if (!(event in this._listeners)) {
+      this._listeners[event] = [];
+    }
+    this._listeners[event]?.push(callback);
+  }
 
-//   removeEventListener<E extends Event.Events<T>>(event: E, callback: T[E]) {
-//     this._listeners[event] = this._listeners[event]?.filter(
-//       (fn) => fn !== callback
-//     );
-//   }
+  removeEventListener<E extends Event.Events<T>>(event: E, callback: T[E]) {
+    this._listeners[event] = this._listeners[event]?.filter(
+      (fn) => fn !== callback
+    );
+  }
 
-//   dispatch<E extends Event.Events<T>>(
-//     event: E,
-//     ...args: Event.CallbackArgs<E, T>
-//   ) {
-//     this._listeners[event]?.forEach((fn) => fn(...args));
-//   }
-// }
+  dispatch<E extends Event.Events<T>>(
+    event: E,
+    ...args: Event.CallbackArgs<E, T>
+  ) {
+    this._listeners[event]?.forEach((fn) => fn(...args));
+  }
+}
 
-// const imagePrompt = function () {
-//   const output = {
-//     width: 0,
-//     height: 0,
-//     image: null,
-//   };
-//   const undoStack: Konva.Line[] = [];
-//   const redoStack: Konva.Line[] = [];
-//   const brushOptions = {
-//     strokeWidth: 30,
-//     color: "#ffffff",
-//   } as { strokeWidth: number; color: string };
+const imagePrompt = function () {
+  const output = {
+    width: 0,
+    height: 0,
+    image: null,
+  };
+  let history: Konva.Line[] = [];
+  let historyStep = -1;
 
-//   let drawingModeOn = false;
-//   let drawingMode: "brush" | "eraser" | "on" | "off" = "brush";
-//   let scale = 1;
-//   let stage = null as null | Konva.Stage;
-//   let drawLayer = null as null | Konva.Layer;
-//   let imageLayer = null as null | Konva.Layer;
-//   let currentLine: Konva.Line | null = null;
+  const brushOptions = {
+    strokeWidth: 30,
+    color: "#ffffff",
+  } as { strokeWidth: number; color: string };
 
-//   const eventListener = new EventListeners();
+  let drawingModeOn = false;
+  let drawingMode: "brush" | "eraser" | "on" | "off" = "brush";
+  let scale = 1;
+  let stage = null as null | Konva.Stage;
+  let drawLayer = null as null | Konva.Layer;
+  let imageLayer = null as null | Konva.Layer;
+  let currentLine: Konva.Line | null = null;
 
-//   return {
-//     undo() {
-//       if (undoStack.length > 0) {
-//         const lineToRemove = undoStack.pop();
-//         if (lineToRemove !== undefined && drawLayer !== null) {
-//           lineToRemove.remove();
-//           redoStack.push(lineToRemove);
+  const eventListener = new EventListeners();
 
-//           drawLayer.batchDraw();
-//           eventListener.dispatch("change", undoStack.length ?? 0);
-//         }
-//       }
-//     },
-//     redo() {
-//       if (redoStack.length > 0) {
-//         const lineToRedraw = redoStack.pop();
-//         if (lineToRedraw !== undefined && drawLayer !== null) {
-//           undoStack.push(lineToRedraw);
-//           drawLayer.add(lineToRedraw);
-//           drawLayer.batchDraw();
-//           eventListener.dispatch("change", undoStack.length ?? 0);
-//         }
-//       }
-//     },
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     on(eventType: string, eventCallback: (...args: any) => void) {
-//       eventListener.addEventListener(eventType, eventCallback);
-//     },
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     off(eventType: string, eventCallback: (...args: any) => void) {
-//       eventListener.removeEventListener(eventType, eventCallback);
-//     },
-//     init: function ({
-//       container,
-//       brushOption,
-//       width,
-//       height,
-//       on,
-//     }: {
-//       container: string | HTMLDivElement;
-//       brushOption?: { strokeWidth: number; color: string };
-//       width?: number;
-//       height?: number;
-//       on?: {
-//         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//         [eventType: string]: (arg: any) => void;
-//       };
-//     }) {
-//       stage = new Konva.Stage({
-//         container,
-//         width,
-//         height,
-//       });
-//       imageLayer = new Konva.Layer();
-//       drawLayer = new Konva.Layer({
-//         id: "drawLayer",
-//       });
+  return {
+    goTo(index: number) {
+      drawLayer?.removeChildren();
+      history = history.slice(0, index);
+      history.forEach((line) => {
+        drawLayer?.add(line);
+      });
+      historyStep = index;
+    },
+    undo() {
+      if (historyStep === -1) {
+        return;
+      }
 
-//       stage.add(imageLayer);
-//       stage.add(drawLayer);
+      const lineToRemove = history[historyStep];
+      if (lineToRemove !== undefined && drawLayer !== null) {
+        lineToRemove.remove();
+        historyStep--;
+        drawLayer.batchDraw();
+        eventListener.dispatch("change", {
+          cnt: historyStep + 1,
+          stage: stage?.toJSON(),
+        });
+      }
+    },
+    redo() {
+      if (historyStep === history.length - 1) {
+        return;
+      }
+      historyStep++;
+      const lineToRedraw = history[historyStep];
+      if (lineToRedraw !== undefined && drawLayer !== null) {
+        drawLayer.add(lineToRedraw);
+        drawLayer.batchDraw();
+        eventListener.dispatch("change", {
+          cnt: historyStep + 1,
+          stage: stage?.toJSON(),
+        });
+      }
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(eventType: string, eventCallback: (...args: any) => void) {
+      eventListener.addEventListener(eventType, eventCallback);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    off(eventType: string, eventCallback: (...args: any) => void) {
+      eventListener.removeEventListener(eventType, eventCallback);
+    },
+    init: function ({
+      container,
+      brushOption,
+      width,
+      height,
+      on,
+      cache,
+    }: {
+      container: string | HTMLDivElement;
+      brushOption?: { strokeWidth: number; color: string };
+      width?: number;
+      height?: number;
+      on?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [eventType: string]: (arg: any) => void;
+      };
+      cache?: string;
+    }) {
+      if (cache) {
+        stage = Konva.Node.create(cache, container) as Konva.Stage;
+        const iLayer = stage.findOne("#imageLayer") as Konva.Layer;
+        const dLayer = stage.findOne("#drawLayer") as Konva.Layer;
+        imageLayer = iLayer;
+        drawLayer = dLayer;
+      } else {
+        stage = new Konva.Stage({
+          container,
+          width,
+          height,
+        });
 
-//       let isPaint = false;
+        imageLayer = new Konva.Layer({
+          id: "imageLayer",
+        });
+        drawLayer = new Konva.Layer({
+          id: "drawLayer",
+        });
+      }
 
-//       if (brushOption) {
-//         brushOptions.color = brushOption.color;
-//         brushOptions.strokeWidth = brushOption.strokeWidth;
-//       }
+      stage.add(imageLayer);
+      stage.add(drawLayer);
 
-//       stage.on("mousedown", () => {
-//         if (!drawingModeOn) return;
-//         isPaint = true;
-//         if (stage !== null) {
-//           const pointerPosition = stage.getPointerPosition();
-//           if (drawLayer !== null && pointerPosition !== null) {
-//             const x = (pointerPosition.x - drawLayer.x()) / scale;
-//             const y = (pointerPosition.y - drawLayer.y()) / scale;
-//             const minValue = 0.0001;
-//             currentLine = new Konva.Line({
-//               stroke: brushOptions?.color,
-//               strokeWidth: brushOptions?.strokeWidth / scale,
-//               globalCompositeOperation:
-//                 drawingMode === "brush" ? "source-over" : "destination-out",
-//               lineCap: "round",
-//               lineJoin: "round",
-//               points: [x, y, x + minValue, y + minValue],
-//             });
+      let isPaint = false;
 
-//             drawLayer.add(currentLine);
-//             eventListener.dispatch("change", undoStack.length + 1 ?? 0);
-//           }
-//         }
-//       });
+      if (brushOption) {
+        brushOptions.color = brushOption.color;
+        brushOptions.strokeWidth = brushOption.strokeWidth;
+      }
 
-//       stage.on("mousemove", ({ evt }) => {
-//         if (!drawingModeOn) return;
-//         if (!isPaint) return;
+      stage.on("mousedown", () => {
+        if (!drawingModeOn) return;
+        isPaint = true;
+        if (stage !== null) {
+          const pointerPosition = stage.getPointerPosition();
+          if (drawLayer !== null && pointerPosition !== null) {
+            const x = (pointerPosition.x - drawLayer.x()) / scale;
+            const y = (pointerPosition.y - drawLayer.y()) / scale;
+            const minValue = 0.0001;
+            currentLine = new Konva.Line({
+              stroke: brushOptions?.color,
+              strokeWidth: brushOptions?.strokeWidth / scale,
+              globalCompositeOperation:
+                drawingMode === "brush" ? "source-over" : "destination-out",
+              lineCap: "round",
+              lineJoin: "round",
+              points: [x, y, x + minValue, y + minValue],
+            });
 
-//         evt.preventDefault();
-//         if (stage !== null) {
-//           const pointerPosition = stage.getPointerPosition();
-//           if (drawLayer !== null && pointerPosition !== null) {
-//             const x = (pointerPosition.x - drawLayer.x()) / scale;
-//             const y = (pointerPosition.y - drawLayer.y()) / scale;
-//             if (currentLine !== null) {
-//               currentLine.points(currentLine.points().concat([x, y]));
-//             }
-//           }
-//         }
-//       });
+            drawLayer.add(currentLine);
+          }
+        }
+      });
 
-//       stage.on("mouseup", () => {
-//         if (!drawingModeOn) return;
-//         if (!isPaint) return;
+      stage.on("mousemove", ({ evt }) => {
+        if (!drawingModeOn) return;
+        if (!isPaint) return;
 
-//         isPaint = false;
+        evt.preventDefault();
+        if (stage !== null) {
+          const pointerPosition = stage.getPointerPosition();
+          if (drawLayer !== null && pointerPosition !== null) {
+            const x = (pointerPosition.x - drawLayer.x()) / scale;
+            const y = (pointerPosition.y - drawLayer.y()) / scale;
+            if (currentLine !== null) {
+              currentLine.points(currentLine.points().concat([x, y]));
+            }
+          }
+        }
+      });
 
-//         if (currentLine !== null) {
-//           redoStack.length = 0;
-//           undoStack.push(currentLine);
-//         }
-//       });
+      stage.on("mouseup", () => {
+        if (!drawingModeOn) return;
+        if (!isPaint) return;
 
-//       if (on !== undefined) {
-//         Object.keys(on).forEach((eventName) => {
-//           eventListener.addEventListener(eventName, on[eventName]);
-//         });
-//       }
+        isPaint = false;
 
-//       if (container instanceof HTMLDivElement) {
-//         const divElement = container;
-//         divElement?.addEventListener("mouseleave", function () {
-//           if (!isPaint) return;
-//           if (!drawingModeOn) return;
+        if (currentLine !== null) {
+          history.push(currentLine);
+          historyStep++;
+          eventListener.dispatch("change", {
+            cnt: historyStep + 1,
+            stage: stage?.toJSON(),
+          });
+        }
+      });
 
-//           isPaint = false;
+      if (on !== undefined) {
+        Object.keys(on).forEach((eventName) => {
+          eventListener.addEventListener(eventName, on[eventName]);
+        });
+      }
 
-//           if (currentLine !== null) {
-//             redoStack.length = 0;
-//             undoStack.push(currentLine);
-//           }
-//         });
-//       } else {
-//         const divElement = document.querySelector(container);
-//         divElement?.addEventListener("mouseleave", function () {
-//           if (!isPaint) return;
-//           if (!drawingModeOn) return;
+      if (container instanceof HTMLDivElement) {
+        const divElement = container;
+        divElement?.addEventListener("mouseleave", function () {
+          if (!isPaint) return;
+          if (!drawingModeOn) return;
 
-//           isPaint = false;
+          isPaint = false;
 
-//           if (currentLine !== null) {
-//             redoStack.length = 0;
-//             undoStack.push(currentLine);
-//           }
-//         });
-//       }
-//     },
-//     importImage({
-//       src,
-//       containerWidth,
-//       containerHeight,
-//       selectedWidth,
-//       selectedHeight,
-//     }: {
-//       src: string;
-//       containerWidth: number;
-//       containerHeight: number;
-//       selectedWidth: number;
-//       selectedHeight: number;
-//     }) {
-//       const imageElement = new Image();
+          if (currentLine !== null) {
+            history.push(currentLine);
+            historyStep++;
+            eventListener.dispatch("change", {
+              cnt: historyStep + 1,
+              stage: stage?.toJSON(),
+            });
+          }
+        });
+      } else {
+        const divElement = document.querySelector(container);
+        divElement?.addEventListener("mouseleave", function () {
+          if (!isPaint) return;
+          if (!drawingModeOn) return;
 
-//       imageElement.onload = () => {
-//         if (stage === null || imageLayer === null || drawLayer === null) return;
-//         const { width: stageW, height: stageH } = getContainSize(
-//           containerWidth,
-//           containerHeight,
-//           selectedWidth,
-//           selectedHeight
-//         );
+          isPaint = false;
 
-//         stage.width(stageW);
-//         stage.height(stageH);
+          if (currentLine !== null) {
+            history.push(currentLine);
+            historyStep++;
+            eventListener.dispatch("change", {
+              cnt: historyStep + 1,
+              stage: stage?.toJSON(),
+            });
+          }
+        });
+      }
+    },
+    importImage({
+      src,
+      containerWidth,
+      containerHeight,
+      selectedWidth,
+      selectedHeight,
+    }: {
+      src: string;
+      containerWidth: number;
+      containerHeight: number;
+      selectedWidth: number;
+      selectedHeight: number;
+    }) {
+      const imageElement = new Image();
 
-//         const { width: imageW, height: imageH } = imageElement;
+      imageElement.onload = () => {
+        if (stage === null || imageLayer === null || drawLayer === null) return;
+        const { width: stageW, height: stageH } = getContainSize(
+          containerWidth,
+          containerHeight,
+          selectedWidth,
+          selectedHeight
+        );
 
-//         const stageRatio = stageW / stageH;
-//         const imageRatio = imageW / imageH;
+        stage.width(stageW);
+        stage.height(stageH);
 
-//         let width = stageW;
-//         let height = stageH;
-//         let x = 0;
-//         let y = 0;
+        const { width: imageW, height: imageH } = imageElement;
 
-//         if (stageRatio < imageRatio) {
-//           width = stageH * imageRatio;
-//           x = (stageW - width) / 2;
-//         } else if (stageRatio > imageRatio) {
-//           height = stageW / imageRatio;
-//           y = (stageH - height) / 2;
-//         }
+        const stageRatio = stageW / stageH;
+        const imageRatio = imageW / imageH;
 
-//         scale = stageRatio < imageRatio ? stageH / imageH : stageW / imageW;
+        let width = stageW;
+        let height = stageH;
+        let x = 0;
+        let y = 0;
 
-//         imageLayer.destroyChildren();
-//         imageLayer.add(
-//           new Konva.Image({ image: imageElement, width, height, x, y })
-//         );
-//         const copyDiv = document.createElement("div");
-//         copyDiv.id = "app";
-//         document.body.appendChild(copyDiv);
+        if (stageRatio < imageRatio) {
+          width = stageH * imageRatio;
+          x = (stageW - width) / 2;
+        } else if (stageRatio > imageRatio) {
+          height = stageW / imageRatio;
+          y = (stageH - height) / 2;
+        }
 
-//         const copyStage = new Konva.Stage({
-//           container: "app",
-//           width: stageW,
-//           height: stageH,
-//         });
+        scale = stageRatio < imageRatio ? stageH / imageH : stageW / imageW;
 
-//         copyStage.add(imageLayer.clone());
-//         const base64 = copyStage.toCanvas().toDataURL("image/png", 0);
-//         Object.assign(output, {
-//           width: selectedWidth,
-//           height: selectedHeight,
-//           image: base64,
-//         });
+        imageLayer.destroyChildren();
+        imageLayer.add(
+          new Konva.Image({ image: imageElement, width, height, x, y })
+        );
+        const copyDiv = document.createElement("div");
+        copyDiv.id = "app";
+        document.body.appendChild(copyDiv);
 
-//         copyDiv.remove();
-//         copyStage.remove();
-//         drawLayer.position({ x, y });
-//         drawLayer.scale({ x: scale, y: scale });
-//         drawLayer.moveToTop();
-//       };
+        const copyStage = new Konva.Stage({
+          container: "app",
+          width: stageW,
+          height: stageH,
+        });
 
-//       imageElement.src = src;
-//     },
-//     exportImage() {
-//       const canvas = document.createElement("canvas");
-//       const context = canvas.getContext("2d");
-//       const foreground = new Image();
+        copyStage.add(imageLayer.clone());
+        const base64 = copyStage.toCanvas().toDataURL("image/png", 0);
+        Object.assign(output, {
+          width: selectedWidth,
+          height: selectedHeight,
+          image: base64,
+        });
 
-//       canvas.width = output.width;
-//       canvas.height = output.height;
+        copyDiv.remove();
+        copyStage.remove();
+        drawLayer.position({ x, y });
+        drawLayer.scale({ x: scale, y: scale });
+        drawLayer.moveToTop();
+      };
 
-//       return new Promise((resolve) => {
-//         foreground.onload = resolve;
+      imageElement.src = src;
+    },
+    resizeAndCenterCrop() {},
+    exportImage() {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const foreground = new Image();
 
-//         if (stage !== null) {
-//           const copyStage = stage.clone();
-//           const copyDrawLayer = copyStage.findOne("#drawLayer");
-//           copyDrawLayer.show();
+      canvas.width = output.width;
+      canvas.height = output.height;
 
-//           foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
-//         }
-//       }).then(() => {
-//         if (stage !== null && context !== null) {
-//           context.drawImage(foreground, 0, 0, output.width, output.height);
-//           return dataURItoBlob(canvas.toDataURL("image/png"));
-//         }
-//       });
-//     },
-//     setStrokeColor(color: string) {
-//       brushOptions.color = color;
-//       if (!drawingModeOn || drawingMode === "eraser") return;
-//       if (stage !== null && brushOptions.strokeWidth !== null) {
-//         stage.container().style.cursor = getDrawCursor(
-//           brushOptions.strokeWidth,
-//           color,
-//           drawingMode === "brush" ? color : undefined
-//         );
-//       }
-//     },
-//     setStrokeWidth(width: number | string) {
-//       if (typeof width === "string") {
-//         brushOptions.strokeWidth = parseInt(width);
-//       } else {
-//         brushOptions.strokeWidth = width;
-//       }
-//       if (!drawingModeOn) return;
-//       if (stage !== null && brushOptions.color !== null) {
-//         stage.container().style.cursor = getDrawCursor(
-//           brushOptions.strokeWidth,
-//           drawingMode === "eraser" ? "none" : brushOptions.color,
-//           drawingMode === "brush" ? brushOptions.color : undefined
-//         );
-//       }
-//     },
-//     setDrawingMode(mode: "brush" | "eraser" | "on" | "off") {
-//       if (stage !== null && drawLayer !== null) {
-//         if (mode === "off") {
-//           drawLayer.hide();
-//           drawingModeOn = false;
-//           stage.container().style.cursor = "not-allowed";
-//           return;
-//         } else if (mode === "on") {
-//           this.setDrawingMode(drawingMode);
-//           return;
-//         } else if (mode === "eraser") {
-//           drawingModeOn = true;
-//           drawLayer.show();
-//           if (stage !== null) {
-//             stage.container().style.cursor = getDrawCursor(
-//               brushOptions.strokeWidth,
-//               "none"
-//             );
-//           }
-//         } else if (mode === "brush") {
-//           drawingModeOn = true;
-//           drawLayer.show();
-//           if (stage !== null) {
-//             stage.container().style.cursor = getDrawCursor(
-//               brushOptions.strokeWidth,
-//               brushOptions.color,
-//               brushOptions.color
-//             );
-//           }
-//         }
+      return new Promise((resolve) => {
+        foreground.onload = resolve;
 
-//         drawingMode = mode;
-//       }
-//     },
-//     deleteImage() {
-//       if (drawLayer !== null && imageLayer !== null) {
-//         drawLayer.destroyChildren();
-//         imageLayer.destroyChildren();
-//         undoStack.length = 0;
-//         redoStack.length = 0;
-//       }
-//     },
-//   };
-// };
+        if (stage !== null) {
+          const copyStage = stage.clone();
+          const copyDrawLayer = copyStage.findOne("#drawLayer");
+          copyDrawLayer.show();
 
-// //
+          foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
+        }
+      }).then(() => {
+        if (stage !== null && context !== null) {
+          context.drawImage(foreground, 0, 0, output.width, output.height);
+          return dataURItoBlob(canvas.toDataURL("image/png"));
+        }
+      });
+    },
+    setStrokeColor(color: string) {
+      brushOptions.color = color;
+      if (!drawingModeOn || drawingMode === "eraser") return;
+      if (stage !== null && brushOptions.strokeWidth !== null) {
+        stage.container().style.cursor = getDrawCursor(
+          brushOptions.strokeWidth,
+          color,
+          drawingMode === "brush" ? color : undefined
+        );
+      }
+    },
+    setStrokeWidth(width: number | string) {
+      if (typeof width === "string") {
+        brushOptions.strokeWidth = parseInt(width);
+      } else {
+        brushOptions.strokeWidth = width;
+      }
+      if (!drawingModeOn) return;
+      if (stage !== null && brushOptions.color !== null) {
+        stage.container().style.cursor = getDrawCursor(
+          brushOptions.strokeWidth,
+          drawingMode === "eraser" ? "none" : brushOptions.color,
+          drawingMode === "brush" ? brushOptions.color : undefined
+        );
+      }
+    },
+    setDrawingMode(mode: "brush" | "eraser" | "on" | "off") {
+      if (stage !== null && drawLayer !== null) {
+        if (mode === "off") {
+          drawLayer.hide();
+          drawingModeOn = false;
+          stage.container().style.cursor = "not-allowed";
+          return;
+        } else if (mode === "on") {
+          this.setDrawingMode(drawingMode);
+          return;
+        } else if (mode === "eraser") {
+          drawingModeOn = true;
+          drawLayer.show();
+          if (stage !== null) {
+            stage.container().style.cursor = getDrawCursor(
+              brushOptions.strokeWidth,
+              "none"
+            );
+          }
+        } else if (mode === "brush") {
+          drawingModeOn = true;
+          drawLayer.show();
+          if (stage !== null) {
+            stage.container().style.cursor = getDrawCursor(
+              brushOptions.strokeWidth,
+              brushOptions.color,
+              brushOptions.color
+            );
+          }
+        }
 
-// const painter = imagePrompt();
-// export { painter };
+        drawingMode = mode;
+      }
+    },
+    deleteImage() {
+      if (drawLayer !== null && imageLayer !== null) {
+        drawLayer.destroyChildren();
+        imageLayer.destroyChildren();
+        history = [];
+        historyStep = 0;
+      }
+    },
+  };
+};
+
+const painter = imagePrompt();
+export { painter };
