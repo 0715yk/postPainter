@@ -5,15 +5,20 @@ import Header from "./Header";
 import Menu from "./Menu";
 import { Modal } from "./Modal";
 import Prompt from "./Prompt";
+import { painter } from "./libs";
 
 function App() {
+  const [savedStep, setSavedStep] = React.useState(0);
   const [modalOn, setModalOn] = useState(false);
   const [size, setSize] = useState("512 x 512");
+
   const _setModalOn = React.useCallback(() => {
     const localStorage = window.localStorage;
     localStorage.setItem("size", JSON.stringify(size));
+    painter.goTo(savedStep);
     setModalOn((prev) => !prev);
-  }, [size]);
+  }, [size, savedStep]);
+
   const changeSize = (e) => {
     setSize(e.target.value);
   };
@@ -46,7 +51,7 @@ function App() {
         style={{ display: modalOn ? "inline" : "none" }}
       >
         <div id="layer">
-          <Header setModalOn={_setModalOn} />
+          <Header setModalOn={_setModalOn} setSavedStep={setSavedStep} />
           <div id="horizontal-box">
             <Menu />
             <Prompt size={size} />

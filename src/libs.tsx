@@ -133,11 +133,16 @@ const imagePrompt = function () {
 
   return {
     goTo(index: number) {
-      drawLayer?.removeChildren();
-      history = history.slice(0, index);
-      history.forEach((line) => {
-        drawLayer?.add(line);
+      history = history.filter((line, _) => {
+        if (_ >= index) {
+          line?.remove();
+          return false;
+        } else {
+          drawLayer.add(line);
+          return true;
+        }
       });
+      drawLayer.batchDraw();
       historyStep = index;
     },
     undo() {
@@ -150,7 +155,7 @@ const imagePrompt = function () {
         lineToRemove.remove();
         drawLayer.batchDraw();
         eventListener.dispatch("change", {
-          cnt: historyStep + 1,
+          cnt: historyStep,
           stage: stage?.toJSON(),
         });
       }
@@ -166,7 +171,7 @@ const imagePrompt = function () {
         historyStep++;
         drawLayer.batchDraw();
         eventListener.dispatch("change", {
-          cnt: historyStep + 1,
+          cnt: historyStep,
           stage: stage?.toJSON(),
         });
       }
@@ -231,6 +236,7 @@ const imagePrompt = function () {
       stage.on("mousedown", () => {
         if (!drawingModeOn) return;
         isPaint = true;
+
         if (stage !== null) {
           const pointerPosition = stage.getPointerPosition();
           if (drawLayer !== null && pointerPosition !== null) {
@@ -280,7 +286,7 @@ const imagePrompt = function () {
           history.push(currentLine);
           historyStep++;
           eventListener.dispatch("change", {
-            cnt: historyStep + 1,
+            cnt: historyStep,
             stage: stage?.toJSON(),
           });
         }
@@ -305,7 +311,7 @@ const imagePrompt = function () {
             history.push(currentLine);
             historyStep++;
             eventListener.dispatch("change", {
-              cnt: historyStep + 1,
+              cnt: historyStep,
               stage: stage?.toJSON(),
             });
           }
@@ -323,7 +329,7 @@ const imagePrompt = function () {
             history.push(currentLine);
             historyStep++;
             eventListener.dispatch("change", {
-              cnt: historyStep + 1,
+              cnt: historyStep,
               stage: stage?.toJSON(),
             });
           }
@@ -408,7 +414,7 @@ const imagePrompt = function () {
 
       imageElement.src = src;
     },
-    resizeAndCenterCrop() {},
+
     exportImage() {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");

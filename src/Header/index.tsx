@@ -3,9 +3,9 @@ import { Modal } from "../Modal";
 import "./style.css";
 import { painter } from "../libs";
 
-export default function Header({ setModalOn }) {
+export default function Header({ setModalOn, setSavedStep }) {
   const [imgSrc, setImgSrc] = React.useState(null);
-  const [savedStep, setSavedStep] = React.useState(0);
+
   const [cnt, setCnt] = React.useState(0);
 
   const exportImage = React.useCallback(async () => {
@@ -14,14 +14,10 @@ export default function Header({ setModalOn }) {
     const url = window.URL.createObjectURL(res);
     setImgSrc(url);
     setSavedStep(cnt);
-  }, [cnt]);
+  }, [cnt, setSavedStep]);
 
   const reset = () => setImgSrc(null);
   const [changed, setChanged] = React.useState(true);
-
-  React.useEffect(() => {
-    console.log(savedStep);
-  }, []);
 
   React.useEffect(() => {
     const localStorage = window.localStorage;
@@ -66,26 +62,11 @@ export default function Header({ setModalOn }) {
     };
   }, []);
 
-  const fallback = () => {
-    console.log(savedStep);
-    painter.goTo(savedStep);
-  };
   return (
     <>
       <header id="header">
         <h2 id="title">이미지 위저드</h2>
         <div id="btnGroup">
-          <button
-            id="exportBtn"
-            onClick={fallback}
-            disabled={changed}
-            style={{
-              background: changed ? "grey" : "#0d99ff",
-              cursor: changed ? "not-allowed" : "pointer",
-            }}
-          >
-            원복
-          </button>
           <button
             id="exportBtn"
             onClick={exportImage}
