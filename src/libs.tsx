@@ -144,6 +144,10 @@ const imagePrompt = function () {
       });
       drawLayer.batchDraw();
       historyStep = index;
+      eventListener.dispatch("change", {
+        cnt: historyStep,
+        stage: stage?.toJSON(),
+      });
     },
     undo() {
       if (historyStep === 0) {

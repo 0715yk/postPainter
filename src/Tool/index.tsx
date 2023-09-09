@@ -103,7 +103,6 @@ export default function Tool({ mode, setMode, imgSrc }) {
         <div>
           5) Control Visibility
           <input
-            defaultChecked={true}
             type="checkbox"
             checked={mode === "off" ? false : true}
             onChange={(e) => {
