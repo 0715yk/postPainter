@@ -114,7 +114,7 @@ const imagePrompt = function () {
     image: null,
   };
   let history: Konva.Line[] = [];
-  let historyStep = -1;
+  let historyStep = 0;
 
   const brushOptions = {
     strokeWidth: 30,
@@ -141,14 +141,13 @@ const imagePrompt = function () {
       historyStep = index;
     },
     undo() {
-      if (historyStep === -1) {
+      if (historyStep === 0) {
         return;
       }
-
+      historyStep--;
       const lineToRemove = history[historyStep];
       if (lineToRemove !== undefined && drawLayer !== null) {
         lineToRemove.remove();
-        historyStep--;
         drawLayer.batchDraw();
         eventListener.dispatch("change", {
           cnt: historyStep + 1,
@@ -157,13 +156,14 @@ const imagePrompt = function () {
       }
     },
     redo() {
-      if (historyStep === history.length - 1) {
+      if (historyStep === history.length) {
         return;
       }
-      historyStep++;
+
       const lineToRedraw = history[historyStep];
       if (lineToRedraw !== undefined && drawLayer !== null) {
         drawLayer.add(lineToRedraw);
+        historyStep++;
         drawLayer.batchDraw();
         eventListener.dispatch("change", {
           cnt: historyStep + 1,
@@ -276,6 +276,7 @@ const imagePrompt = function () {
         isPaint = false;
 
         if (currentLine !== null) {
+          history = history.slice(0, historyStep);
           history.push(currentLine);
           historyStep++;
           eventListener.dispatch("change", {
@@ -300,6 +301,7 @@ const imagePrompt = function () {
           isPaint = false;
 
           if (currentLine !== null) {
+            history = history.slice(0, historyStep + 1);
             history.push(currentLine);
             historyStep++;
             eventListener.dispatch("change", {
@@ -317,6 +319,7 @@ const imagePrompt = function () {
           isPaint = false;
 
           if (currentLine !== null) {
+            history = history.slice(0, historyStep + 1);
             history.push(currentLine);
             historyStep++;
             eventListener.dispatch("change", {

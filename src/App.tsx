@@ -5,22 +5,18 @@ import Header from "./Header";
 import Menu from "./Menu";
 import { Modal } from "./Modal";
 import Prompt from "./Prompt";
-import useDidMountEffect from "./hooks/useDidMountEffect";
 
 function App() {
   const [modalOn, setModalOn] = useState(false);
   const [size, setSize] = useState("512 x 512");
-  const _setModalOn = () => {
+  const _setModalOn = React.useCallback(() => {
+    const localStorage = window.localStorage;
+    localStorage.setItem("size", JSON.stringify(size));
     setModalOn((prev) => !prev);
-  };
+  }, [size]);
   const changeSize = (e) => {
     setSize(e.target.value);
   };
-
-  useDidMountEffect(() => {
-    const localStorage = window.localStorage;
-    localStorage.setItem("size", JSON.stringify(size));
-  }, [size]);
 
   React.useEffect(() => {
     const localStorage = window.localStorage;
