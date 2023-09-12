@@ -5,6 +5,7 @@
 // export { imagePrompt as painter };
 // import Konva from "konva";
 
+import pattern from "./assets/pattern.jpg";
 import Konva from "konva";
 
 export function getDrawCursor(
@@ -107,7 +108,7 @@ export class EventListeners<T extends Event.CallbackTypes> {
   }
 }
 
-const imagePrompt = function () {
+const inpainter = function () {
   const output = {
     width: 0,
     height: 0,
@@ -138,7 +139,6 @@ const imagePrompt = function () {
           line?.remove();
           return false;
         } else {
-          drawLayer.add(line);
           return true;
         }
       });
@@ -210,6 +210,7 @@ const imagePrompt = function () {
         stage = Konva.Node.create(cache, container) as Konva.Stage;
         const iLayer = stage.findOne("#imageLayer") as Konva.Layer;
         const dLayer = stage.findOne("#drawLayer") as Konva.Layer;
+
         imageLayer = iLayer;
         drawLayer = dLayer;
       } else {
@@ -225,10 +226,9 @@ const imagePrompt = function () {
         drawLayer = new Konva.Layer({
           id: "drawLayer",
         });
+        stage.add(imageLayer);
+        stage.add(drawLayer);
       }
-
-      stage.add(imageLayer);
-      stage.add(drawLayer);
 
       let isPaint = false;
 
@@ -247,6 +247,7 @@ const imagePrompt = function () {
             const x = (pointerPosition.x - drawLayer.x()) / scale;
             const y = (pointerPosition.y - drawLayer.y()) / scale;
             const minValue = 0.0001;
+
             currentLine = new Konva.Line({
               stroke: brushOptions?.color,
               strokeWidth: brushOptions?.strokeWidth / scale,
@@ -256,8 +257,21 @@ const imagePrompt = function () {
               lineJoin: "round",
               points: [x, y, x + minValue, y + minValue],
             });
-
             drawLayer.add(currentLine);
+            const img = new Image();
+            img.onload = () => {
+              drawLayer.add(
+                new Konva.Rect({
+                  globalCompositeOperation: "source-in",
+                  fillPatternImage: img,
+                  fillPatternRepeat: "repeat",
+                  width: 1500,
+                  height: 1500,
+                  fillPatternScaleY: 3,
+                })
+              );
+            };
+            img.src = pattern;
           }
         }
       });
@@ -303,7 +317,7 @@ const imagePrompt = function () {
       }
 
       if (container instanceof HTMLDivElement) {
-        const divElement = container;
+        const divElement = container.firstChild;
         divElement?.addEventListener("mouseleave", function () {
           if (!isPaint) return;
           if (!drawingModeOn) return;
@@ -321,7 +335,7 @@ const imagePrompt = function () {
           }
         });
       } else {
-        const divElement = document.querySelector(container);
+        const divElement = document.querySelector(container).firstChild;
         divElement?.addEventListener("mouseleave", function () {
           if (!isPaint) return;
           if (!drawingModeOn) return;
@@ -391,6 +405,7 @@ const imagePrompt = function () {
         imageLayer.add(
           new Konva.Image({ image: imageElement, width, height, x, y })
         );
+
         const copyDiv = document.createElement("div");
         copyDiv.id = "app";
         document.body.appendChild(copyDiv);
@@ -411,38 +426,13 @@ const imagePrompt = function () {
 
         copyDiv.remove();
         copyStage.remove();
+
         drawLayer.position({ x, y });
         drawLayer.scale({ x: scale, y: scale });
         drawLayer.moveToTop();
       };
 
       imageElement.src = src;
-    },
-
-    exportImage() {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      const foreground = new Image();
-
-      canvas.width = output.width;
-      canvas.height = output.height;
-
-      return new Promise((resolve) => {
-        foreground.onload = resolve;
-
-        if (stage !== null) {
-          const copyStage = stage.clone();
-          const copyDrawLayer = copyStage.findOne("#drawLayer");
-          copyDrawLayer.show();
-
-          foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
-        }
-      }).then(() => {
-        if (stage !== null && context !== null) {
-          context.drawImage(foreground, 0, 0, output.width, output.height);
-          return dataURItoBlob(canvas.toDataURL("image/png"));
-        }
-      });
     },
     setStrokeColor(color: string) {
       brushOptions.color = color;
@@ -512,8 +502,88 @@ const imagePrompt = function () {
         historyStep = 0;
       }
     },
+    exportMask() {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const foreground = new Image();
+
+      canvas.width = output.width;
+      canvas.height = output.height;
+
+      return new Promise((resolve) => {
+        foreground.onload = resolve;
+        if (stage !== null) {
+          const copyStage = stage.clone();
+          copyStage.container().style.backgroundColor = "black";
+          const copyImageLayer = copyStage.findOne("#imageLayer");
+          copyImageLayer.hide();
+
+          foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
+        }
+      }).then(() => {
+        if (context !== null) {
+          context.drawImage(foreground, 0, 0, output.width, output.height);
+          const drawingCanvas = canvas;
+          if (drawingCanvas !== undefined) {
+            const context = drawingCanvas.getContext("2d");
+            if (context !== null) {
+              context.globalCompositeOperation = "destination-over";
+              context.fillStyle = "black";
+              context.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+              context.drawImage(drawingCanvas, 0, 0);
+
+              const imgData = context.getImageData(
+                0,
+                0,
+                drawingCanvas.width,
+                drawingCanvas.height
+              );
+
+              for (let i = 0; i < imgData.data.length; i += 4) {
+                const count =
+                  imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2];
+                let colour = 0;
+                if (count > 383) colour = 255;
+
+                imgData.data[i] = colour;
+                imgData.data[i + 1] = colour;
+                imgData.data[i + 2] = colour;
+                imgData.data[i + 3] = 255;
+              }
+
+              context.putImageData(imgData, 0, 0);
+              const pngURL = drawingCanvas.toDataURL("image/png");
+              return dataURItoBlob(pngURL);
+            }
+          }
+        }
+      });
+    },
+    exportMaskingImage() {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const foreground = new Image();
+
+      canvas.width = output.width;
+      canvas.height = output.height;
+
+      return new Promise((resolve) => {
+        foreground.onload = resolve;
+
+        const copyStage = stage.clone();
+        const copyDrawLayer = copyStage.findOne("#drawLayer");
+        copyDrawLayer.hide();
+        foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
+      }).then(() => {
+        if (context !== null) {
+          context.drawImage(foreground, 0, 0, output.width, output.height);
+          return dataURItoBlob(canvas.toDataURL("image/png"));
+        }
+      });
+    },
   };
 };
 
-const painter = imagePrompt();
+const painter = inpainter();
+
 export { painter };

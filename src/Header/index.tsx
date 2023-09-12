@@ -5,25 +5,32 @@ import { painter } from "../libs";
 
 export default function Header({ setModalOn, setSavedStep }) {
   const [imgSrc, setImgSrc] = React.useState(null);
+  const [imgSrc2, setImgSrc2] = React.useState(null);
 
   const [cnt, setCnt] = React.useState(0);
 
   const exportImage = React.useCallback(async () => {
-    const res = await painter.exportImage();
-
+    const res = await painter.exportMask();
     const url = window.URL.createObjectURL(res);
+    const res2 = await painter.exportMaskingImage();
+    const url2 = window.URL.createObjectURL(res2);
     setImgSrc(url);
+    setImgSrc2(url2);
     setSavedStep(cnt);
+    setChanged(true);
   }, [cnt, setSavedStep]);
 
-  const reset = () => setImgSrc(null);
+  const reset = () => {
+    setImgSrc(null);
+    setImgSrc2(null);
+  };
   const [changed, setChanged] = React.useState(true);
 
   React.useEffect(() => {
-    const localStorage = window.localStorage;
-    const result = JSON.parse(localStorage.getItem("stage"));
-    const src = localStorage.getItem("imgSrc");
-    const cachedSize = JSON.parse(localStorage.getItem("size"));
+    // const localStorage = window.localStorage;
+    // const result = JSON.parse(localStorage.getItem("stage"));
+    // const src = localStorage.getItem("imgSrc");
+    // const cachedSize = JSON.parse(localStorage.getItem("size"));
 
     painter.init({
       container: document.querySelector("#canvas") as HTMLDivElement,
@@ -34,26 +41,26 @@ export default function Header({ setModalOn, setSavedStep }) {
           else setChanged(true);
 
           setCnt(cnt);
-          const localStorage = window.localStorage;
-          localStorage.setItem("stage", JSON.stringify(stage));
+          // const localStorage = window.localStorage;
+          // localStorage.setItem("stage", JSON.stringify(stage));
         },
       },
-      cache: result,
+      // cache: result,
     });
 
-    if (result) {
-      const [selectedWidth, selectedHeight] = cachedSize
-        .split(" x ")
-        .map((n) => parseInt(n));
+    // if (result) {
+    //   const [selectedWidth, selectedHeight] = cachedSize
+    //     .split(" x ")
+    //     .map((n) => parseInt(n));
 
-      painter.importImage({
-        src,
-        containerWidth: 580,
-        containerHeight: 580,
-        selectedWidth,
-        selectedHeight,
-      });
-    }
+    //   painter.importImage({
+    //     src,
+    //     containerWidth: 580,
+    //     containerHeight: 580,
+    //     selectedWidth,
+    //     selectedHeight,
+    //   });
+    // }
     return () => {
       painter.off("change", function (cnt: number) {
         if (cnt > 0) setChanged(false);
@@ -65,7 +72,7 @@ export default function Header({ setModalOn, setSavedStep }) {
   return (
     <>
       <header id="header">
-        <h2 id="title">이미지 위저드</h2>
+        <h2 id="title">인페인팅</h2>
         <div id="btnGroup">
           <button
             id="exportBtn"
@@ -85,8 +92,9 @@ export default function Header({ setModalOn, setSavedStep }) {
       </header>
       {imgSrc !== null && (
         <Modal>
-          <div>
-            <img src={imgSrc} alt="result" onClick={reset} />
+          <div onClick={reset} style={{ display: "flex", gap: "20px" }}>
+            <img src={imgSrc} alt="result" />
+            <img src={imgSrc2} alt="result" />
           </div>
         </Modal>
       )}

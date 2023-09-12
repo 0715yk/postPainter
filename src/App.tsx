@@ -13,11 +13,11 @@ function App() {
   const [size, setSize] = useState("512 x 512");
 
   const _setModalOn = React.useCallback(() => {
-    const localStorage = window.localStorage;
-    localStorage.setItem("size", JSON.stringify(size));
+    // const localStorage = window.localStorage;
+    // localStorage.setItem("size", JSON.stringify(size));
     painter.goTo(savedStep);
     setModalOn((prev) => !prev);
-  }, [size, savedStep]);
+  }, [savedStep]);
 
   const changeSize = (e) => {
     setSize(e.target.value);
@@ -43,7 +43,7 @@ function App() {
           <option>1024 x 1024</option>
         </select>
         <button id="wizardBtn" onClick={_setModalOn}>
-          이미지 위자드
+          인페인팅
         </button>
       </div>
       <Modal

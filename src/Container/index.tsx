@@ -47,8 +47,8 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
         selectedWidth,
         selectedHeight,
       });
-      const localStorage = window.localStorage;
-      localStorage.setItem("imgSrc", imgSrc);
+      // const localStorage = window.localStorage;
+      // localStorage.setItem("imgSrc", imgSrc);
     }
   }, [size, imgSrc]);
 
