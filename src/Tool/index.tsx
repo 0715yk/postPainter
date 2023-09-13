@@ -84,6 +84,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
             <option value="blue">blue</option>
             <option value="purple">purple</option>
             <option value="orange">orange</option>
+            <option value="rgb(140,171,95)">lime green</option>
           </select>
         </div>
         <br />

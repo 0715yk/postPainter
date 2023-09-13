@@ -13,11 +13,11 @@ function App() {
   const [size, setSize] = useState("512 x 512");
 
   const _setModalOn = React.useCallback(() => {
-    // const localStorage = window.localStorage;
-    // localStorage.setItem("size", JSON.stringify(size));
+    const localStorage = window.localStorage;
+    localStorage.setItem("size", JSON.stringify(size));
     painter.goTo(savedStep);
     setModalOn((prev) => !prev);
-  }, [savedStep]);
+  }, [size, savedStep]);
 
   const changeSize = (e) => {
     setSize(e.target.value);

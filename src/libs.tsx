@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-// import Konva from "konva";
-// import imagePrompt from "image-prompt";
+// import inpainter from "inpainter";
 
-// export { imagePrompt as painter };
-// import Konva from "konva";
+// export { inpainter as painter };
 
-import pattern from "./assets/pattern.jpg";
 import Konva from "konva";
+
+import pattern from "./assets/pattern.png";
 
 export function getDrawCursor(
   strokeWidth: number,
@@ -15,12 +14,9 @@ export function getDrawCursor(
 ) {
   const circle = `
       <svg
-        height="${strokeWidth}"
-        fill="${brushColor}"
         viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
-        width="${strokeWidth}"
         xmlns="http://www.w3.org/2000/svg"
-        stroke="${strokeColor ? strokeColor : "black"}"
+
       >
         <circle
           cx="50%"
@@ -256,18 +252,23 @@ const inpainter = function () {
               lineCap: "round",
               lineJoin: "round",
               points: [x, y, x + minValue, y + minValue],
+              opacity: 1,
             });
             drawLayer.add(currentLine);
             const img = new Image();
             img.onload = () => {
+              const prevDrawRect = drawLayer.findOne("#drawRect");
+              if (prevDrawRect) prevDrawRect.destroy();
               drawLayer.add(
                 new Konva.Rect({
-                  globalCompositeOperation: "source-in",
                   fillPatternImage: img,
-                  fillPatternRepeat: "repeat",
+                  x: 0,
+                  y: 0,
                   width: 1500,
                   height: 1500,
-                  fillPatternScaleY: 3,
+                  globalCompositeOperation: "source-in",
+                  id: "drawRect",
+                  fillPatternScaleY: 0.1,
                 })
               );
             };
@@ -517,7 +518,8 @@ const inpainter = function () {
           copyStage.container().style.backgroundColor = "black";
           const copyImageLayer = copyStage.findOne("#imageLayer");
           copyImageLayer.hide();
-
+          const copyDrawLayer = copyStage.findOne("#drawLayer");
+          copyDrawLayer.show();
           foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
         }
       }).then(() => {
@@ -527,8 +529,8 @@ const inpainter = function () {
           if (drawingCanvas !== undefined) {
             const context = drawingCanvas.getContext("2d");
             if (context !== null) {
-              context.globalCompositeOperation = "destination-over";
-              context.fillStyle = "black";
+              context.globalCompositeOperation = "source-in";
+              context.fillStyle = "white";
               context.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
               context.drawImage(drawingCanvas, 0, 0);
 
@@ -559,7 +561,7 @@ const inpainter = function () {
         }
       });
     },
-    exportMaskingImage() {
+    exportImage() {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
       const foreground = new Image();

@@ -12,7 +12,7 @@ export default function Header({ setModalOn, setSavedStep }) {
   const exportImage = React.useCallback(async () => {
     const res = await painter.exportMask();
     const url = window.URL.createObjectURL(res);
-    const res2 = await painter.exportMaskingImage();
+    const res2 = await painter.exportImage();
     const url2 = window.URL.createObjectURL(res2);
     setImgSrc(url);
     setImgSrc2(url2);
