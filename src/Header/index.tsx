@@ -2,6 +2,7 @@ import * as React from "react";
 import { Modal } from "../Modal";
 import "./style.css";
 import { painter } from "../libs";
+import pattern from "../assets/pattern.png";
 
 export default function Header({ setModalOn, setSavedStep }) {
   const [imgSrc, setImgSrc] = React.useState(null);
@@ -33,6 +34,7 @@ export default function Header({ setModalOn, setSavedStep }) {
     // const cachedSize = JSON.parse(localStorage.getItem("size"));
 
     painter.init({
+      patternSrc: pattern,
       container: document.querySelector("#canvas") as HTMLDivElement,
       on: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
@@ -69,11 +71,30 @@ export default function Header({ setModalOn, setSavedStep }) {
     };
   }, []);
 
+  const getPatternImageSource = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    const img = new Image() as HTMLImageElement;
+
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      if (img !== null && e?.target !== null) {
+        const pattern = e.target.result as string;
+        painter._will_be_deprecated_changePatternImage(pattern);
+      }
+    };
+  };
   return (
     <>
       <header id="header">
         <h2 id="title">인페인팅</h2>
         <div id="btnGroup">
+          <input
+            id="imageInput"
+            accept="image/*"
+            type="file"
+            onChange={getPatternImageSource}
+          />
           <button
             id="exportBtn"
             onClick={exportImage}

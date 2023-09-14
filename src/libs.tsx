@@ -5,27 +5,26 @@
 
 import Konva from "konva";
 
-import pattern from "./assets/pattern.png";
-
 export function getDrawCursor(
   strokeWidth: number,
   brushColor: string,
   strokeColor?: string
 ) {
   const circle = `
-      <svg
-        viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
-        xmlns="http://www.w3.org/2000/svg"
-
-      >
-        <circle
-          cx="50%"
-          cy="50%"
-          r="${strokeWidth}"    
-          fill="${brushColor}"
-          stroke="${strokeColor ? strokeColor : "black"}"
-        />
-      </svg>
+  <svg
+  height="${strokeWidth}"
+  fill="${brushColor}"
+  viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
+  width="${strokeWidth}"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <circle
+    cx="50%"
+    cy="50%"
+    r="${strokeWidth}" 
+    stroke="${strokeColor ? strokeColor : "black"}"
+  />
+</svg>
     `;
 
   return `url(data:image/svg+xml;base64,${window.btoa(circle)}) ${Math.ceil(
@@ -125,7 +124,7 @@ const inpainter = function () {
   let drawLayer = null as null | Konva.Layer;
   let imageLayer = null as null | Konva.Layer;
   let currentLine: Konva.Line | null = null;
-
+  let drawRect: Konva.Rect | null = null;
   const eventListener = new EventListeners();
 
   return {
@@ -168,6 +167,10 @@ const inpainter = function () {
       const lineToRedraw = history[historyStep];
       if (lineToRedraw !== undefined && drawLayer !== null) {
         drawLayer.add(lineToRedraw);
+        const ifDrawRectExist = drawLayer.findOne("#drawRect");
+        if (ifDrawRectExist) drawRect.remove();
+
+        drawLayer.add(drawRect);
         historyStep++;
         drawLayer.batchDraw();
         eventListener.dispatch("change", {
@@ -191,6 +194,7 @@ const inpainter = function () {
       height,
       on,
       cache,
+      patternSrc,
     }: {
       container: string | HTMLDivElement;
       brushOption?: { strokeWidth: number; color: string };
@@ -201,6 +205,7 @@ const inpainter = function () {
         [eventType: string]: (arg: any) => void;
       };
       cache?: string;
+      patternSrc: string;
     }) {
       if (cache) {
         stage = Konva.Node.create(cache, container) as Konva.Stage;
@@ -233,6 +238,19 @@ const inpainter = function () {
         brushOptions.strokeWidth = brushOption.strokeWidth;
       }
 
+      const img = new Image();
+
+      img.onload = () => {
+        drawRect = new Konva.Rect({
+          fillPatternImage: img,
+          id: "drawRect",
+          fillPatternRepeat: "no-repeat",
+          globalCompositeOperation: "source-in",
+          fillPriority: "pattern",
+        });
+      };
+      img.src = patternSrc;
+
       stage.on("mousedown", () => {
         if (!drawingModeOn) return;
         isPaint = true;
@@ -252,27 +270,13 @@ const inpainter = function () {
               lineCap: "round",
               lineJoin: "round",
               points: [x, y, x + minValue, y + minValue],
-              opacity: 1,
             });
             drawLayer.add(currentLine);
-            const img = new Image();
-            img.onload = () => {
-              const prevDrawRect = drawLayer.findOne("#drawRect");
-              if (prevDrawRect) prevDrawRect.destroy();
-              drawLayer.add(
-                new Konva.Rect({
-                  fillPatternImage: img,
-                  x: 0,
-                  y: 0,
-                  width: 1500,
-                  height: 1500,
-                  globalCompositeOperation: "source-in",
-                  id: "drawRect",
-                  fillPatternScaleY: 0.1,
-                })
-              );
-            };
-            img.src = pattern;
+
+            const ifDrawRectExist = drawLayer.findOne("#drawRect");
+            if (ifDrawRectExist) drawRect.remove();
+
+            drawLayer.add(drawRect);
           }
         }
       });
@@ -287,6 +291,7 @@ const inpainter = function () {
           if (drawLayer !== null && pointerPosition !== null) {
             const x = (pointerPosition.x - drawLayer.x()) / scale;
             const y = (pointerPosition.y - drawLayer.y()) / scale;
+
             if (currentLine !== null) {
               currentLine.points(currentLine.points().concat([x, y]));
             }
@@ -431,20 +436,16 @@ const inpainter = function () {
         drawLayer.position({ x, y });
         drawLayer.scale({ x: scale, y: scale });
         drawLayer.moveToTop();
+
+        drawRect.x(-(drawLayer.x() / scale));
+        drawRect.y(-(drawLayer.y() / scale));
+        drawRect.fillPatternScaleX(1 / scale);
+        drawRect.fillPatternScaleY(1 / scale);
+        drawRect.width(drawLayer.width() * (1 / scale));
+        drawRect.height(drawLayer.height() * (1 / scale));
       };
 
       imageElement.src = src;
-    },
-    setStrokeColor(color: string) {
-      brushOptions.color = color;
-      if (!drawingModeOn || drawingMode === "eraser") return;
-      if (stage !== null && brushOptions.strokeWidth !== null) {
-        stage.container().style.cursor = getDrawCursor(
-          brushOptions.strokeWidth,
-          color,
-          drawingMode === "brush" ? color : undefined
-        );
-      }
     },
     setStrokeWidth(width: number | string) {
       if (typeof width === "string") {
@@ -519,6 +520,9 @@ const inpainter = function () {
           const copyImageLayer = copyStage.findOne("#imageLayer");
           copyImageLayer.hide();
           const copyDrawLayer = copyStage.findOne("#drawLayer");
+
+          const drawRect = copyDrawLayer.findOne("#drawRect");
+          drawRect.destroy();
           copyDrawLayer.show();
           foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
         }
@@ -582,6 +586,24 @@ const inpainter = function () {
           return dataURItoBlob(canvas.toDataURL("image/png"));
         }
       });
+    },
+    _will_be_deprecated_changePatternImage(src: string) {
+      if (drawRect === null) return;
+      const img = new Image();
+
+      img.onload = () => {
+        const ifDrawRectExist = drawLayer.findOne("#drawRect");
+        if (ifDrawRectExist) drawRect.remove();
+        drawRect.fillPatternImage(img);
+        drawRect.x(-(drawLayer.x() / scale));
+        drawRect.y(-(drawLayer.y() / scale));
+        drawRect.fillPatternScaleX(1 / scale);
+        drawRect.fillPatternScaleY(1 / scale);
+        drawRect.width(drawLayer.width() * (1 / scale));
+        drawRect.height(drawLayer.height() * (1 / scale));
+        drawLayer.add(drawRect);
+      };
+      img.src = src;
     },
   };
 };

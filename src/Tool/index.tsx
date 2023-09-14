@@ -3,10 +3,10 @@ import { painter } from "../libs";
 import "./style.css";
 
 export default function Tool({ mode, setMode, imgSrc }) {
-  const setStrokeColor = (e) => {
-    const color = (e.target as HTMLSelectElement).value;
-    painter.setStrokeColor(color);
-  };
+  // const setStrokeColor = (e) => {
+  //   const color = (e.target as HTMLSelectElement).value;
+  //   painter.setStrokeColor(color);
+  // };
   const setStrokeWidth = (e) => {
     const width = (e.target as HTMLInputElement).value;
     painter.setStrokeWidth(width);
@@ -41,7 +41,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
           </button>
         </div> */}
         <div>
-          2) Selecting brush/eraser :
+          1) Selecting brush/eraser :
           <div id="brush-eraser-btns">
             <button
               disabled={mode === "off" ? true : false}
@@ -72,7 +72,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
           </div>
         </div>
         <br />
-        <div>
+        {/* <div>
           3) Selecting Brush Color :
           <select
             id="colorSelection"
@@ -86,10 +86,10 @@ export default function Tool({ mode, setMode, imgSrc }) {
             <option value="orange">orange</option>
             <option value="rgb(140,171,95)">lime green</option>
           </select>
-        </div>
+        </div> */}
         <br />
         <div>
-          4) Control Brush Size
+          2) Control Brush Size
           <input
             type="range"
             id="pixelInput"
@@ -102,7 +102,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
         </div>
         <br />
         <div>
-          5) Control Visibility
+          3) Control Visibility
           <input
             type="checkbox"
             checked={mode === "off" ? false : true}
@@ -114,7 +114,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
         </div>
         <br />
         <div className="undo_redo_area">
-          <div>6) Undo & Redo</div>
+          <div>4) Undo & Redo</div>
           <div className="undo_redo_btns">
             <button onClick={() => painter.undo()}>&lt;</button>
             <button onClick={() => painter.redo()}>&gt;</button>
