@@ -38,7 +38,7 @@ export default function Header({ setModalOn, setSavedStep }) {
       container: document.querySelector("#canvas") as HTMLDivElement,
       on: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        change: function ({ cnt, stage }: { cnt: number; stage: string }) {
+        change: function ({ cnt }: { cnt: number }) {
           if (cnt > 0) setChanged(false);
           else setChanged(true);
 
