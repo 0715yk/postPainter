@@ -2,8 +2,9 @@ import * as React from "react";
 import { useRef } from "react";
 import "./style.css";
 import { painter } from "../libs";
+import useDidMountEffect from "../hooks/useDidMountEffect";
 
-function Container({ size, imgSrc, setImgSrc, mode }) {
+function Container({ flag, size, imgSrc, setImgSrc, mode }) {
   const [hoverMode, setHoverMode] = React.useState(false);
   const containerRef = useRef<null | HTMLDivElement>(null);
 
@@ -34,23 +35,23 @@ function Container({ size, imgSrc, setImgSrc, mode }) {
     };
   };
 
-  React.useEffect(() => {
-    if (imgSrc !== null && containerRef !== null) {
+  useDidMountEffect(() => {
+    if (imgSrc !== null) {
       const [selectedWidth, selectedHeight] = size
         .split(" x ")
         .map((n) => parseInt(n));
-
-      painter.importImage({
-        src: imgSrc,
-        containerWidth: 580,
-        containerHeight: 580,
-        selectedWidth,
-        selectedHeight,
-      });
-      // const localStorage = window.localStorage;
-      // localStorage.setItem("imgSrc", imgSrc);
+      if (flag) {
+        const response = painter.importImage({
+          src: imgSrc,
+          selectedWidth,
+          selectedHeight,
+        });
+        console.log(response);
+        const localStorage = window.localStorage;
+        localStorage.setItem("imgSrc", imgSrc);
+      }
     }
-  }, [size, imgSrc]);
+  }, [size, imgSrc, flag]);
 
   React.useEffect(() => {
     if (mode === "edit" && imgSrc !== null) {

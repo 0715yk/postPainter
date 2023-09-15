@@ -8,16 +8,16 @@ import Prompt from "./Prompt";
 import { painter } from "./libs";
 
 function App() {
-  const [savedStep, setSavedStep] = React.useState(0);
+  const [cnt, setCnt] = React.useState(0);
   const [modalOn, setModalOn] = useState(false);
   const [size, setSize] = useState("512 x 512");
 
   const _setModalOn = React.useCallback(() => {
     const localStorage = window.localStorage;
     localStorage.setItem("size", JSON.stringify(size));
-    painter.goTo(savedStep);
+    painter.goTo(cnt);
     setModalOn((prev) => !prev);
-  }, [size, savedStep]);
+  }, [size, cnt]);
 
   const changeSize = (e) => {
     setSize(e.target.value);
@@ -30,7 +30,7 @@ function App() {
       setSize(cachedSize);
     }
   }, []);
-
+  const [flag, setFlag] = React.useState(false);
   return (
     <>
       <div id="buttons">
@@ -51,10 +51,15 @@ function App() {
         style={{ display: modalOn ? "inline" : "none" }}
       >
         <div id="layer">
-          <Header setModalOn={_setModalOn} setSavedStep={setSavedStep} />
+          <Header
+            setModalOn={_setModalOn}
+            setCnt={setCnt}
+            setFlag={setFlag}
+            size={size}
+          />
           <div id="horizontal-box">
             <Menu />
-            <Prompt size={size} />
+            <Prompt size={size} flag={flag} />
           </div>
         </div>
       </Modal>

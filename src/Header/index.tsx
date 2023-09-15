@@ -2,67 +2,82 @@ import * as React from "react";
 import { Modal } from "../Modal";
 import "./style.css";
 import { painter } from "../libs";
-import pattern from "../assets/pattern.png";
 
-export default function Header({ setModalOn, setSavedStep }) {
+export default function Header({ setFlag, setModalOn, setCnt, size }) {
   const [imgSrc, setImgSrc] = React.useState(null);
   const [imgSrc2, setImgSrc2] = React.useState(null);
-
-  const [cnt, setCnt] = React.useState(0);
+  const [stack, setStack] = React.useState([]);
+  const [modalOn, setModal] = React.useState(false);
+  const [changed, setChanged] = React.useState(true);
+  const exportTest = async (value) => {
+    painter.deleteImage();
+    painter.importImage(value);
+  };
 
   const exportImage = React.useCallback(async () => {
     const res = await painter.exportMask();
     const url = window.URL.createObjectURL(res);
     const res2 = await painter.exportImage();
     const url2 = window.URL.createObjectURL(res2);
+    const [selectedWidth, selectedHeight] = size
+      .split(" x ")
+      .map((n) => parseInt(n));
+
+    setStack((prev) => {
+      const arr = prev.slice();
+      const idx = arr.length;
+      arr.push({
+        idx,
+        src: url2,
+        selectedWidth: selectedWidth,
+        selectedHeight: selectedHeight,
+        maskSrc: url,
+      });
+      return arr;
+    });
     setImgSrc(url);
     setImgSrc2(url2);
-    setSavedStep(cnt);
     setChanged(true);
-  }, [cnt, setSavedStep]);
+    setModal(true);
+  }, [size]);
 
   const reset = () => {
-    setImgSrc(null);
-    setImgSrc2(null);
+    // setImgSrc(null);
+    // setImgSrc2(null);
+    setModal(false);
   };
-  const [changed, setChanged] = React.useState(true);
 
   React.useEffect(() => {
-    // const localStorage = window.localStorage;
-    // const result = JSON.parse(localStorage.getItem("stage"));
-    // const src = localStorage.getItem("imgSrc");
-    // const cachedSize = JSON.parse(localStorage.getItem("size"));
+    const localStorage = window.localStorage;
+    const result = JSON.parse(localStorage.getItem("stage"));
 
-    painter.init({
-      patternSrc: pattern,
-      container: document.querySelector("#canvas") as HTMLDivElement,
-      on: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        change: function ({ cnt }: { cnt: number }) {
-          if (cnt > 0) setChanged(false);
-          else setChanged(true);
+    const func = async () => {
+      const response = await painter.init({
+        patternSrc: "src/assets/pattern.png",
+        container: document.querySelector("#canvas") as HTMLDivElement,
+        on: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+          change: function ({ cnt, stage }: { cnt: number; stage: string }) {
+            if (cnt > 0) setChanged(false);
+            else setChanged(true);
 
-          setCnt(cnt);
-          // const localStorage = window.localStorage;
-          // localStorage.setItem("stage", JSON.stringify(stage));
+            setCnt(cnt);
+            const localStorage = window.localStorage;
+            localStorage.setItem("stage", JSON.stringify(stage));
+          },
         },
-      },
-      // cache: result,
-    });
+        cache: result,
+        containerSize: {
+          width: 550,
+          height: 550,
+        },
+      });
+      if (response) {
+        setFlag(true);
+      }
+    };
 
-    // if (result) {
-    //   const [selectedWidth, selectedHeight] = cachedSize
-    //     .split(" x ")
-    //     .map((n) => parseInt(n));
-
-    //   painter.importImage({
-    //     src,
-    //     containerWidth: 580,
-    //     containerHeight: 580,
-    //     selectedWidth,
-    //     selectedHeight,
-    //   });
-    // }
+    void func();
     return () => {
       painter.off("change", function (cnt: number) {
         if (cnt > 0) setChanged(false);
@@ -71,30 +86,34 @@ export default function Header({ setModalOn, setSavedStep }) {
     };
   }, []);
 
-  const getPatternImageSource = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    const img = new Image() as HTMLImageElement;
-
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      if (img !== null && e?.target !== null) {
-        const pattern = e.target.result as string;
-        painter._will_be_deprecated_changePatternImage(pattern);
-      }
-    };
-  };
   return (
     <>
       <header id="header">
         <h2 id="title">인페인팅</h2>
+        <div style={{ display: "flex", gap: "15px" }}>
+          {stack.map((el) => {
+            return (
+              <div
+                key={el.idx}
+                onClick={() => {
+                  void exportTest(el);
+                }}
+                style={{
+                  color: "#FFFFFF",
+                  cursor: "pointer",
+                  border: "1px solid white",
+                  padding: "15px",
+                  background: "blue",
+                  borderRadius: "5px",
+                }}
+              >
+                {el.idx}
+              </div>
+            );
+          })}
+        </div>
+
         <div id="btnGroup">
-          <input
-            id="imageInput"
-            accept="image/*"
-            type="file"
-            onChange={getPatternImageSource}
-          />
           <button
             id="exportBtn"
             onClick={exportImage}
@@ -111,7 +130,7 @@ export default function Header({ setModalOn, setSavedStep }) {
           </button>
         </div>
       </header>
-      {imgSrc !== null && (
+      {modalOn && (
         <Modal>
           <div onClick={reset} style={{ display: "flex", gap: "20px" }}>
             <img src={imgSrc} alt="result" />
