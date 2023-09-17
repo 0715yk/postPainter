@@ -78,6 +78,16 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
     };
 
     void func();
+
+    window.addEventListener("resize", () => {
+      const w = document.documentElement.clientWidth;
+      const h = document.documentElement.clientHeight;
+
+      console.log("-------------");
+      console.log(w);
+      console.log(h);
+      console.log("-------------");
+    });
     return () => {
       painter.off("change", function (cnt: number) {
         if (cnt > 0) setChanged(false);

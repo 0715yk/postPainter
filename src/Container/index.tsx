@@ -41,12 +41,12 @@ function Container({ flag, size, imgSrc, setImgSrc, mode }) {
         .split(" x ")
         .map((n) => parseInt(n));
       if (flag) {
-        const response = painter.importImage({
+        painter.importImage({
           src: imgSrc,
           selectedWidth,
           selectedHeight,
         });
-        console.log(response);
+
         const localStorage = window.localStorage;
         localStorage.setItem("imgSrc", imgSrc);
       }
