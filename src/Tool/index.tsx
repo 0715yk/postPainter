@@ -3,12 +3,9 @@ import { painter } from "../libs";
 import "./style.css";
 
 export default function Tool({ mode, setMode, imgSrc }) {
-  // const setStrokeColor = (e) => {
-  //   const color = (e.target as HTMLSelectElement).value;
-  //   painter.setStrokeColor(color);
-  // };
   const setStrokeWidth = (e) => {
     const width = (e.target as HTMLInputElement).value;
+
     painter.setStrokeWidth(width);
   };
 
@@ -20,6 +17,14 @@ export default function Tool({ mode, setMode, imgSrc }) {
   //   painter.setDrawingMode("edit");
   //   setMode("edit");
   // };
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "z") {
+      painter.undo();
+    } else if (event.key === "y") {
+      painter.redo();
+    }
+  });
 
   return (
     <div id="tool-area" style={{ display: imgSrc === null ? "none" : "block" }}>
@@ -72,7 +77,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
           </div>
         </div>
         <br />
-        {/* <div>
+        <div>
           3) Selecting Brush Color :
           <select
             id="colorSelection"
@@ -86,7 +91,7 @@ export default function Tool({ mode, setMode, imgSrc }) {
             <option value="orange">orange</option>
             <option value="rgb(140,171,95)">lime green</option>
           </select>
-        </div> */}
+        </div>
         <br />
         <div>
           2) Control Brush Size
@@ -94,8 +99,8 @@ export default function Tool({ mode, setMode, imgSrc }) {
             type="range"
             id="pixelInput"
             step="5"
-            min="5"
-            max="55"
+            min="10"
+            max="100"
             defaultValue={"30"}
             onChange={setStrokeWidth}
           />

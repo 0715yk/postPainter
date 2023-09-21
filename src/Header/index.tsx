@@ -11,14 +11,13 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
   const [changed, setChanged] = React.useState(true);
   const exportTest = async (value) => {
     painter.deleteImage();
-    painter.importImage(value);
+    const res = await painter.importImage(value);
   };
 
   const exportImage = React.useCallback(async () => {
     const res = await painter.exportMask();
-    const url = window.URL.createObjectURL(res);
     const res2 = await painter.exportImage();
-    const url2 = window.URL.createObjectURL(res2);
+
     const [selectedWidth, selectedHeight] = size
       .split(" x ")
       .map((n) => parseInt(n));
@@ -26,17 +25,18 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
     setStack((prev) => {
       const arr = prev.slice();
       const idx = arr.length;
+
       arr.push({
         idx,
-        src: url2,
+        src: res2,
         selectedWidth: selectedWidth,
         selectedHeight: selectedHeight,
-        maskSrc: url,
+        maskSrc: res,
       });
       return arr;
     });
-    setImgSrc(url);
-    setImgSrc2(url2);
+    setImgSrc(res);
+    setImgSrc2(res2);
     setChanged(true);
     setModal(true);
   }, [size]);
@@ -67,11 +67,15 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
           },
         },
         cache: result,
+        brushOption: {
+          strokeWidth: 30,
+        },
         containerSize: {
           width: 550,
           height: 550,
         },
       });
+
       if (response) {
         setFlag(true);
       }
@@ -79,15 +83,6 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
 
     void func();
 
-    window.addEventListener("resize", () => {
-      const w = document.documentElement.clientWidth;
-      const h = document.documentElement.clientHeight;
-
-      console.log("-------------");
-      console.log(w);
-      console.log(h);
-      console.log("-------------");
-    });
     return () => {
       painter.off("change", function (cnt: number) {
         if (cnt > 0) setChanged(false);

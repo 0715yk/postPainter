@@ -5,102 +5,6 @@
 
 import Konva from "konva";
 
-async function convertBlackToTransparent(imageUrl) {
-  const image = new Image();
-  image.crossOrigin = "anonymous";
-
-  const loadImagePromise = new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = reject;
-  });
-
-  image.src = imageUrl;
-  await loadImagePromise;
-
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  canvas.width = image.width;
-  canvas.height = image.height;
-
-  context.drawImage(image, 0, 0);
-
-  const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-  for (let i = 0; i < imgData.data.length; i += 4) {
-    const red = imgData.data[i];
-    const green = imgData.data[i + 1];
-    const blue = imgData.data[i + 2];
-
-    // 검정색 픽셀인 경우 투명하게 처리합니다.
-    if (red === 0 && green === 0 && blue === 0) {
-      imgData.data[i + 3] = 0; // Alpha 값을 0으로 설정하여 투명 처리
-    }
-  }
-
-  context.putImageData(imgData, 0, 0);
-
-  const transparentImageUrl = canvas.toDataURL();
-
-  return transparentImageUrl;
-}
-
-export function getDrawCursor(strokeWidth: number) {
-  const circle = `
-  <svg
-    height="${strokeWidth}"
-    width="${strokeWidth}"
-    viewBox="0 0 ${strokeWidth * 2} ${strokeWidth * 2}"
-    xmlns="http://www.w3.org/2000/svg"
-    >
-        <defs>
-            <mask 
-                id="maskingFrame"
-            >
-                <circle
-                    cx="50%"
-                    cy="50%"
-                    r="${strokeWidth}"
-                    stroke="#000000"
-                    fill="#FFFFFF"
-                    
-                />  
-                <circle
-                    cx="50%"
-                    cy="50%"
-                    r="${strokeWidth / 1.15}"
-                />
-            </mask>
-        </defs>
-        <circle
-            cx="50%"
-            cy="50%"
-            r="${strokeWidth * 3}"
-            mask="url(#maskingFrame)"  
-            fill="#FFFFFF" 
-         
-        />
-    </svg>
-    `;
-
-  return `url(data:image/svg+xml;base64,${window.btoa(circle)}) ${Math.ceil(
-    strokeWidth / 2
-  )} ${Math.ceil(strokeWidth / 2)}, pointer`;
-}
-
-export function dataURItoBlob(dataURI: string) {
-  const byteString = window.atob(dataURI.split(",")[1]);
-  const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-
-  const bb = new Blob([ab], { type: mimeString });
-  return bb;
-}
-
 export function getContainSize(
   containerWidth: number,
   containerHeight: number,
@@ -115,7 +19,6 @@ export function getContainSize(
 }
 
 export namespace Event {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   export type CallbackTypes = Record<string, (...args: any[]) => void>;
 
   export type Events<T extends CallbackTypes> = keyof T;
@@ -159,6 +62,20 @@ export class EventListeners<T extends Event.CallbackTypes> {
   }
 }
 
+export function loadImage(path: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = path;
+    img.onload = () => {
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      reject(e);
+    };
+  });
+}
+
 const inpainter = function () {
   const output = {
     width: 0,
@@ -178,8 +95,11 @@ const inpainter = function () {
   let stage = null as null | Konva.Stage;
   let drawLayer = null as null | Konva.Layer;
   let imageLayer = null as null | Konva.Layer;
+  let cursorLayer = null as null | Konva.Layer;
+
   let currentLine: Konva.Line | null = null;
   let drawRect: Konva.Rect | null = null;
+  let cursorRing: Konva.Ring | null = null;
 
   const containerSizeOption: {
     width: null | number;
@@ -188,23 +108,10 @@ const inpainter = function () {
 
   const eventListener = new EventListeners();
 
-  let initialSize =
-    document.documentElement.clientWidth *
-    document.documentElement.clientHeight;
-
-  window.addEventListener("resize", () => {
-    const w = document.documentElement.clientWidth;
-    const h = document.documentElement.clientHeight;
-    const nowSize = w * h;
-    const ratio = nowSize / initialSize;
-
-    console.log("-------------");
-    console.log(w);
-    console.log(h);
-    console.log("-------------");
-  });
-
   return {
+    getStage() {
+      return stage;
+    },
     goTo(index: number) {
       if (drawLayer === null) return;
 
@@ -268,7 +175,7 @@ const inpainter = function () {
       eventListener.removeEventListener(eventType, eventCallback);
     },
 
-    init: function ({
+    init: async function ({
       container,
       brushOption,
       width,
@@ -293,13 +200,21 @@ const inpainter = function () {
         height: null | number;
       };
     }) {
+      if (brushOption) {
+        brushOptions.strokeWidth = brushOption.strokeWidth;
+      }
+
       if (cache) {
         stage = Konva.Node.create(cache, container) as Konva.Stage;
         const iLayer = stage.findOne("#imageLayer") as Konva.Layer;
         const dLayer = stage.findOne("#drawLayer") as Konva.Layer;
+        const cLayer = stage.findOne("#cursorLayer") as Konva.Layer;
+        const cursor = cLayer.findOne("#ring") as Konva.Ring;
 
         imageLayer = iLayer;
         drawLayer = dLayer;
+        cursorLayer = cLayer;
+        cursorRing = cursor;
       } else {
         stage = new Konva.Stage({
           container,
@@ -313,18 +228,32 @@ const inpainter = function () {
         drawLayer = new Konva.Layer({
           id: "drawLayer",
         });
-        stage.add(imageLayer);
-        stage.add(drawLayer);
+        cursorLayer = new Konva.Layer({
+          id: "cursorLayer",
+        });
+
+        cursorRing = new Konva.Ring({
+          innerRadius: brushOptions.strokeWidth / 2 / scale,
+          outerRadius: (brushOptions.strokeWidth / 2 + 3) / scale,
+          fill: "#FFFFFF",
+          id: "ring",
+          stroke: "black",
+          strokeWidth: 0.6,
+        });
       }
+
+      stage.add(imageLayer);
+      stage.add(drawLayer);
+      stage.add(cursorLayer);
+      cursorLayer.add(cursorRing);
+      cursorLayer.hide();
 
       let isPaint = false;
 
-      if (brushOption) {
-        brushOptions.strokeWidth = brushOption.strokeWidth;
-      }
-
       containerSizeOption.width = containerSize.width;
       containerSizeOption.height = containerSize.height;
+
+      stage.container().style.cursor = "none";
 
       stage.on("mousedown", () => {
         if (!drawingModeOn) return;
@@ -335,7 +264,6 @@ const inpainter = function () {
           if (drawLayer !== null && pointerPosition !== null) {
             const x = (pointerPosition.x - drawLayer.x()) / scale;
             const y = (pointerPosition.y - drawLayer.y()) / scale;
-            const minValue = 0.0001;
 
             currentLine = new Konva.Line({
               stroke: "#FFFFFF",
@@ -344,7 +272,7 @@ const inpainter = function () {
                 drawingMode === "brush" ? "source-over" : "destination-out",
               lineCap: "round",
               lineJoin: "round",
-              points: [x, y, x + minValue, y + minValue],
+              points: [x, y, x, y],
             });
             drawLayer.add(currentLine);
 
@@ -356,15 +284,19 @@ const inpainter = function () {
       });
 
       stage.on("mousemove", ({ evt }) => {
-        if (!drawingModeOn) return;
-        if (!isPaint) return;
-
         evt.preventDefault();
         if (stage !== null) {
           const pointerPosition = stage.getPointerPosition();
+
           if (drawLayer !== null && pointerPosition !== null) {
             const x = (pointerPosition.x - drawLayer.x()) / scale;
             const y = (pointerPosition.y - drawLayer.y()) / scale;
+
+            cursorRing.x(x);
+            cursorRing.y(y);
+
+            if (!drawingModeOn) return;
+            if (!isPaint) return;
 
             if (currentLine !== null) {
               currentLine.points(currentLine.points().concat([x, y]));
@@ -398,7 +330,15 @@ const inpainter = function () {
 
       if (container instanceof HTMLDivElement) {
         const divElement = container.firstChild;
+        divElement?.addEventListener("mouseenter", function () {
+          if (cursorLayer !== null) {
+            cursorLayer.show();
+            cursorLayer.moveToTop();
+          }
+        });
+
         divElement?.addEventListener("mouseleave", function () {
+          if (cursorLayer !== null) cursorLayer.hide();
           if (!isPaint) return;
           if (!drawingModeOn) return;
 
@@ -416,7 +356,16 @@ const inpainter = function () {
         });
       } else {
         const divElement = document.querySelector(container)?.firstChild;
+
+        divElement?.addEventListener("mouseenter", function () {
+          if (cursorLayer !== null) {
+            cursorLayer.show();
+            cursorLayer.moveToTop();
+          }
+        });
+
         divElement?.addEventListener("mouseleave", function () {
+          if (cursorLayer !== null) cursorLayer.hide();
           if (!isPaint) return;
           if (!drawingModeOn) return;
 
@@ -434,25 +383,21 @@ const inpainter = function () {
         });
       }
 
-      const img = new Image();
+      const img = await loadImage(patternSrc);
 
-      return new Promise((resolve) => {
-        img.onload = resolve;
-        img.src = patternSrc;
-      }).then(() => {
-        if (drawLayer === null) return;
-        drawRect = new Konva.Rect({
-          fillPatternImage: img,
-          id: "drawRect",
-          fillPatternRepeat: "no-repeat",
-          globalCompositeOperation: "source-in",
-          fillPriority: "pattern",
-        });
-        drawLayer.add(drawRect);
-        return true;
+      if (drawLayer === null) return;
+      drawRect = new Konva.Rect({
+        fillPatternImage: img,
+        id: "drawRect",
+        fillPatternRepeat: "no-repeat",
+        globalCompositeOperation: "source-in",
+        fillPriority: "pattern",
       });
+      drawLayer.add(drawRect);
+
+      return true;
     },
-    importImage({
+    async importImage({
       src,
       selectedWidth,
       selectedHeight,
@@ -463,105 +408,139 @@ const inpainter = function () {
       selectedHeight: number;
       maskSrc?: string;
     }) {
-      const imageElement = new Image();
       const { width: containerWidth, height: containerHeight } =
         containerSizeOption;
 
       if (containerWidth === null || containerHeight === null) return;
 
-      imageElement.onload = async () => {
-        if (
-          stage === null ||
-          imageLayer === null ||
-          drawLayer === null ||
-          drawRect === null
-        )
-          return;
-        const { width: stageW, height: stageH } = getContainSize(
-          containerWidth,
-          containerHeight,
-          selectedWidth,
-          selectedHeight
-        );
+      const imageElement = (await loadImage(src)) as HTMLImageElement;
 
-        stage.width(stageW);
-        stage.height(stageH);
+      if (
+        stage === null ||
+        imageLayer === null ||
+        drawLayer === null ||
+        drawRect === null
+      )
+        return;
+      const { width: stageW, height: stageH } = getContainSize(
+        containerWidth,
+        containerHeight,
+        selectedWidth,
+        selectedHeight
+      );
 
-        const { width: imageW, height: imageH } = imageElement;
+      stage.width(stageW);
+      stage.height(stageH);
 
-        const stageRatio = stageW / stageH;
-        const imageRatio = imageW / imageH;
+      const { width: imageW, height: imageH } = imageElement;
 
-        let width = stageW;
-        let height = stageH;
-        let x = 0;
-        let y = 0;
+      const stageRatio = stageW / stageH;
+      const imageRatio = imageW / imageH;
 
-        if (stageRatio < imageRatio) {
-          width = stageH * imageRatio;
-          x = (stageW - width) / 2;
-        } else if (stageRatio > imageRatio) {
-          height = stageW / imageRatio;
-          y = (stageH - height) / 2;
+      let width = stageW;
+      let height = stageH;
+      let x = 0;
+      let y = 0;
+
+      if (stageRatio < imageRatio) {
+        width = stageH * imageRatio;
+        x = (stageW - width) / 2;
+      } else if (stageRatio > imageRatio) {
+        height = stageW / imageRatio;
+        y = (stageH - height) / 2;
+      }
+
+      scale = stageRatio < imageRatio ? stageH / imageH : stageW / imageW;
+
+      imageLayer.removeChildren();
+      imageLayer.add(
+        new Konva.Image({ image: imageElement, width, height, x, y })
+      );
+
+      const copyDiv = document.createElement("div");
+      copyDiv.id = "app";
+      document.body.appendChild(copyDiv);
+
+      const copyStage = new Konva.Stage({
+        container: "app",
+        width: stageW,
+        height: stageH,
+      });
+
+      copyStage.add(imageLayer.clone());
+      const base64 = copyStage.toCanvas().toDataURL("image/png", 0);
+      Object.assign(output, {
+        width: selectedWidth,
+        height: selectedHeight,
+        image: base64,
+      });
+
+      copyDiv.remove();
+      copyStage.remove();
+
+      drawLayer.position({ x, y });
+      drawLayer.scale({ x: scale, y: scale });
+      drawLayer.moveToTop();
+
+      cursorLayer.position({ x, y });
+      cursorLayer.scale({ x: scale, y: scale });
+      cursorLayer.moveToTop();
+
+      drawRect.x(-(drawLayer.x() / scale));
+      drawRect.y(-(drawLayer.y() / scale));
+
+      drawRect.fillPatternScaleX(1 / scale);
+      drawRect.fillPatternScaleY(1 / scale);
+      drawRect.width(drawLayer.width() * (1 / scale));
+      drawRect.height(drawLayer.height() * (1 / scale));
+
+      cursorRing?.innerRadius(brushOptions.strokeWidth / 2 / scale);
+      cursorRing?.outerRadius((brushOptions.strokeWidth / 2 + 3) / scale);
+
+      if (maskSrc) {
+        const image = (await loadImage(maskSrc)) as HTMLImageElement;
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (context === null) return;
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        context.drawImage(image, 0, 0);
+
+        const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < imgData.data.length; i += 4) {
+          const red = imgData.data[i];
+          const green = imgData.data[i + 1];
+          const blue = imgData.data[i + 2];
+
+          // 검정색 픽셀인 경우 투명하게 처리합니다.
+          if (red === 0 && green === 0 && blue === 0) {
+            imgData.data[i + 3] = 0; // Alpha 값을 0으로 설정하여 투명 처리
+          }
         }
 
-        scale = stageRatio < imageRatio ? stageH / imageH : stageW / imageW;
+        context.putImageData(imgData, 0, 0);
 
-        imageLayer.removeChildren();
-        imageLayer.add(
-          new Konva.Image({ image: imageElement, width, height, x, y })
-        );
+        const transparentImageUrl = canvas.toDataURL() as string;
 
-        const copyDiv = document.createElement("div");
-        copyDiv.id = "app";
-        document.body.appendChild(copyDiv);
+        const imageEl = (await loadImage(
+          transparentImageUrl
+        )) as HTMLImageElement;
 
-        const copyStage = new Konva.Stage({
-          container: "app",
-          width: stageW,
-          height: stageH,
+        const imageKonva = new Konva.Image({
+          image: imageEl,
         });
+        drawLayer.add(imageKonva);
+        const ifDrawRectExist = drawLayer.findOne("#drawRect");
+        if (ifDrawRectExist) drawRect.remove();
+        drawLayer.add(drawRect);
 
-        copyStage.add(imageLayer.clone());
-        const base64 = copyStage.toCanvas().toDataURL("image/png", 0);
-        Object.assign(output, {
-          width: selectedWidth,
-          height: selectedHeight,
-          image: base64,
-        });
-
-        copyDiv.remove();
-        copyStage.remove();
-
-        drawLayer.position({ x, y });
-        drawLayer.scale({ x: scale, y: scale });
-        drawLayer.moveToTop();
-
-        drawRect.x(-(drawLayer.x() / scale));
-        drawRect.y(-(drawLayer.y() / scale));
-        drawRect.fillPatternScaleX(1 / scale);
-        drawRect.fillPatternScaleY(1 / scale);
-        drawRect.width(drawLayer.width() * (1 / scale));
-        drawRect.height(drawLayer.height() * (1 / scale));
-
-        if (maskSrc) {
-          const response = await convertBlackToTransparent(maskSrc);
-          const image = new Image();
-
-          image.onload = () => {
-            const imageKonva = new Konva.Image({
-              image: image,
-            });
-            drawLayer.add(imageKonva);
-            const ifDrawRectExist = drawLayer.findOne("#drawRect");
-            if (ifDrawRectExist) drawRect.remove();
-            drawLayer.add(drawRect);
-          };
-          image.src = response;
-        }
-      };
-
-      imageElement.src = src;
+        return true;
+      } else {
+        return null;
+      }
     },
     setStrokeWidth(width: number | string) {
       if (typeof width === "string") {
@@ -570,18 +549,18 @@ const inpainter = function () {
         brushOptions.strokeWidth = width;
       }
       if (!drawingModeOn) return;
-      if (stage !== null) {
-        stage.container().style.cursor = getDrawCursor(
-          brushOptions.strokeWidth
-        );
+      if (cursorRing !== null) {
+        cursorRing?.innerRadius(brushOptions.strokeWidth / 2 / scale);
+        cursorRing?.outerRadius((brushOptions.strokeWidth / 2 + 3) / scale);
       }
     },
     setDrawingMode(mode: "brush" | "eraser" | "on" | "off") {
-      if (stage !== null && drawLayer !== null) {
+      if (stage !== null && drawLayer !== null && cursorLayer !== null) {
         if (mode === "off") {
           drawLayer.hide();
           drawingModeOn = false;
           stage.container().style.cursor = "not-allowed";
+          cursorLayer.hide();
           return;
         } else if (mode === "on") {
           this.setDrawingMode(drawingMode);
@@ -589,18 +568,20 @@ const inpainter = function () {
         } else if (mode === "eraser") {
           drawingModeOn = true;
           drawLayer.show();
-          if (stage !== null) {
-            stage.container().style.cursor = getDrawCursor(
-              brushOptions.strokeWidth
-            );
+          stage.container().style.cursor = "none";
+
+          if (cursorRing !== null) {
+            cursorRing?.innerRadius(brushOptions.strokeWidth / 2 / scale);
+            cursorRing?.outerRadius((brushOptions.strokeWidth / 2 + 3) / scale);
           }
         } else if (mode === "brush") {
           drawingModeOn = true;
           drawLayer.show();
-          if (stage !== null) {
-            stage.container().style.cursor = getDrawCursor(
-              brushOptions.strokeWidth
-            );
+          stage.container().style.cursor = "none";
+
+          if (cursorRing !== null) {
+            cursorRing?.innerRadius(brushOptions.strokeWidth / 2 / scale);
+            cursorRing?.outerRadius((brushOptions.strokeWidth / 2 + 3) / scale);
           }
         }
 
@@ -608,155 +589,97 @@ const inpainter = function () {
       }
     },
     deleteImage() {
-      if (drawLayer !== null && imageLayer !== null) {
+      if (drawLayer !== null && imageLayer !== null && cursorLayer !== null) {
         drawLayer.removeChildren();
         imageLayer.removeChildren();
+        cursorLayer.hide();
         history = [];
         historyStep = 0;
       }
     },
-    exportMask() {
+    async exportMask() {
+      if (stage === null) return;
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
-      const foreground = new Image();
 
       canvas.width = output.width;
       canvas.height = output.height;
 
-      return new Promise((resolve) => {
-        foreground.onload = resolve;
-        if (stage !== null) {
-          const copyStage = stage.clone();
-          copyStage.container().style.backgroundColor = "black";
-          const copyImageLayer = copyStage.findOne("#imageLayer");
-          copyImageLayer.hide();
-          const copyDrawLayer = copyStage.findOne("#drawLayer") as Konva.Layer;
-          copyDrawLayer.show();
-          copyDrawLayer.children.forEach((el) => {
-            if (el.id() === "drawRect") {
-              el.destroy();
-            }
-          });
+      const copyStage = stage.clone();
+      copyStage.container().style.backgroundColor = "black";
+      const copyImageLayer = copyStage.findOne("#imageLayer") as Konva.Layer;
+      copyImageLayer.hide();
+      const copyDrawLayer = copyStage.findOne("#drawLayer") as Konva.Layer;
+      copyDrawLayer.show();
 
-          foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
+      const copyCursorLayer = copyStage.findOne("#cursorLayer") as Konva.Layer;
+      copyCursorLayer.hide();
+
+      copyDrawLayer?.children?.forEach((el) => {
+        if (el.id() === "drawRect") {
+          el.remove();
         }
-      }).then(() => {
-        if (context !== null) {
-          context.drawImage(foreground, 0, 0, output.width, output.height);
-          const drawingCanvas = canvas;
-          if (drawingCanvas !== undefined) {
-            const context = drawingCanvas.getContext("2d");
-            if (context !== null) {
-              context.globalCompositeOperation = "source-in";
-              context.fillStyle = "white";
-              context.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-              context.drawImage(drawingCanvas, 0, 0);
+      });
 
-              const imgData = context.getImageData(
-                0,
-                0,
-                drawingCanvas.width,
-                drawingCanvas.height
-              );
+      const pngURL = copyStage.toDataURL({ pixelRatio: 2 });
+      const imageElement = await loadImage(pngURL);
+      if (context !== null) {
+        context.drawImage(imageElement, 0, 0, output.width, output.height);
+        const drawingCanvas = canvas;
+        if (drawingCanvas !== undefined) {
+          const context = drawingCanvas.getContext("2d");
+          if (context !== null) {
+            context.globalCompositeOperation = "source-in";
+            context.fillStyle = "white";
+            context.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            context.drawImage(drawingCanvas, 0, 0);
 
-              for (let i = 0; i < imgData.data.length; i += 4) {
-                const count =
-                  imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2];
-                let colour = 0;
-                if (count > 383) colour = 255;
+            const imgData = context.getImageData(
+              0,
+              0,
+              drawingCanvas.width,
+              drawingCanvas.height
+            );
 
-                imgData.data[i] = colour;
-                imgData.data[i + 1] = colour;
-                imgData.data[i + 2] = colour;
-                imgData.data[i + 3] = 255;
-              }
+            for (let i = 0; i < imgData.data.length; i += 4) {
+              const count =
+                imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2];
+              let colour = 0;
+              if (count > 383) colour = 255;
 
-              context.putImageData(imgData, 0, 0);
-              const pngURL = drawingCanvas.toDataURL("image/png");
-              return dataURItoBlob(pngURL);
+              imgData.data[i] = colour;
+              imgData.data[i + 1] = colour;
+              imgData.data[i + 2] = colour;
+              imgData.data[i + 3] = 255;
             }
+
+            context.putImageData(imgData, 0, 0);
+            const pngURL = drawingCanvas.toDataURL("image/png");
+            return pngURL;
           }
         }
-      });
+      }
     },
-    exportImage() {
+    async exportImage() {
+      if (stage === null) return;
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
-      const foreground = new Image();
 
       canvas.width = output.width;
       canvas.height = output.height;
+      const copyStage = stage.clone();
+      const copyDrawLayer = copyStage.findOne("#drawLayer");
+      copyDrawLayer.hide();
+      const copyCursorLayer = copyStage.findOne("#cursorLayer") as Konva.Layer;
+      copyCursorLayer.hide();
 
-      return new Promise((resolve) => {
-        if (stage === null) return;
-        foreground.onload = resolve;
-
-        const copyStage = stage.clone();
-        const copyDrawLayer = copyStage.findOne("#drawLayer");
-        copyDrawLayer.hide();
-        foreground.src = copyStage.toDataURL({ pixelRatio: 2 });
-      }).then(() => {
-        if (context !== null) {
-          context.drawImage(foreground, 0, 0, output.width, output.height);
-          return dataURItoBlob(canvas.toDataURL("image/png"));
-        }
-      });
-    },
-    getCenterCroppedImage({
-      src,
-      selectedWidth,
-      selectedHeight,
-    }: {
-      src: string;
-      selectedWidth: number;
-      selectedHeight: number;
-    }) {
-      const imageElement = new Image();
-      const { width: containerWidth, height: containerHeight } =
-        containerSizeOption;
-      return new Promise((resolve) => {
-        imageElement.onload = resolve;
-        imageElement.src = src;
-      }).then(() => {
-        if (
-          stage === null ||
-          containerWidth === null ||
-          containerHeight === null
-        ) {
-          return;
-        }
-
-        const { width: stageW, height: stageH } = getContainSize(
-          containerWidth,
-          containerHeight,
-          selectedWidth,
-          selectedHeight
-        );
-
-        stage.width(stageW);
-        stage.height(stageH);
-
-        const { width: imageW, height: imageH } = imageElement;
-
-        const stageRatio = stageW / stageH;
-        const imageRatio = imageW / imageH;
-
-        let width = stageW;
-        let height = stageH;
-        let x = 0;
-        let y = 0;
-
-        if (stageRatio < imageRatio) {
-          width = stageH * imageRatio;
-          x = (stageW - width) / 2;
-        } else if (stageRatio > imageRatio) {
-          height = stageW / imageRatio;
-          y = (stageH - height) / 2;
-        }
-
-        scale = stageRatio < imageRatio ? stageH / imageH : stageW / imageW;
-        return new Konva.Image({ image: imageElement, width, height, x, y });
-      });
+      const pngURL = copyStage.toDataURL({ pixelRatio: 2 });
+      const imageElement = await loadImage(pngURL);
+      if (context !== null) {
+        context.drawImage(imageElement, 0, 0, output.width, output.height);
+        const pngURL = canvas.toDataURL("image/png");
+        return pngURL;
+      }
     },
   };
 };
