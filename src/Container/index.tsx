@@ -40,6 +40,7 @@ function Container({ flag, size, imgSrc, setImgSrc, mode }) {
       const [selectedWidth, selectedHeight] = size
         .split(" x ")
         .map((n) => parseInt(n));
+      console.log(selectedHeight, selectedWidth, imgSrc);
       if (flag) {
         painter.importImage({
           src: imgSrc,
@@ -69,39 +70,41 @@ function Container({ flag, size, imgSrc, setImgSrc, mode }) {
   }, []);
 
   return (
-    <div ref={containerRef} id="container">
-      {hoverMode && (
-        <div id="editLayer">
-          <button>원본보기</button>
-          <input
-            id="imageInput"
-            accept="image/*"
-            type="file"
-            onChange={getImageSource2}
-          />
-          <button
-            onClick={() => {
-              painter.deleteImage();
-              setImgSrc(null);
-              setHoverMode(false);
-            }}
-          >
-            이미지 삭제
-          </button>
-        </div>
-      )}
-      {imgSrc === null && (
-        <div id="imageUploadLayer">
-          <input
-            id="imageInput"
-            accept="image/*"
-            type="file"
-            onChange={getImageSource}
-          />
-        </div>
-      )}
-      <div id="canvas"></div>
-    </div>
+    <>
+      <div ref={containerRef} id="container">
+        {hoverMode && (
+          <div id="editLayer">
+            <button>원본보기</button>
+            <input
+              id="imageInput"
+              accept="image/*"
+              type="file"
+              onChange={getImageSource2}
+            />
+            <button
+              onClick={() => {
+                painter.deleteImage();
+                setImgSrc(null);
+                setHoverMode(false);
+              }}
+            >
+              이미지 삭제
+            </button>
+          </div>
+        )}
+        {imgSrc === null && (
+          <div id="imageUploadLayer">
+            <input
+              id="imageInput"
+              accept="image/*"
+              type="file"
+              onChange={getImageSource}
+            />
+          </div>
+        )}
+        <div id="canvas"></div>
+      </div>
+    </>
   );
 }
 

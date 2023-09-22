@@ -3,13 +3,11 @@ import { useState } from "react";
 import "./App.css";
 import Header from "./Header";
 import Menu from "./Menu";
-import { Modal } from "./Modal";
-import Prompt from "./Prompt";
 import { painter } from "./libs";
+import Prompt from "./Prompt";
 
 function App() {
   const [cnt, setCnt] = React.useState(0);
-  const [modalOn, setModalOn] = useState(false);
   const [size, setSize] = useState("512 x 512");
 
   const _setModalOn = React.useCallback(() => {
@@ -43,27 +41,20 @@ function App() {
           <option>576 x 1024</option>
           <option>1024 x 1024</option>
         </select>
-        <button id="wizardBtn" onClick={_setModalOn}>
-          인페인팅
-        </button>
       </div>
-      <Modal
-        className="dimmedModal"
-        style={{ display: modalOn ? "inline" : "none" }}
-      >
-        <div id="layer">
-          <Header
-            setModalOn={_setModalOn}
-            setCnt={setCnt}
-            setFlag={setFlag}
-            size={size}
-          />
-          <div id="horizontal-box">
-            <Menu />
-            <Prompt size={size} flag={flag} />
-          </div>
+
+      <div id="layer">
+        <Header
+          setModalOn={_setModalOn}
+          setCnt={setCnt}
+          setFlag={setFlag}
+          size={size}
+        />
+        <div id="horizontal-box">
+          <Menu />
+          <Prompt size={size} flag={flag} />
         </div>
-      </Modal>
+      </div>
     </>
   );
 }

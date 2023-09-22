@@ -11,11 +11,10 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
   const [changed, setChanged] = React.useState(true);
   const exportTest = async (value) => {
     painter.deleteImage();
-    const res = await painter.importImage(value);
+    await painter.importImage(value);
   };
 
   const exportImage = React.useCallback(async () => {
-    const res = await painter.exportMask();
     const res2 = await painter.exportImage();
 
     const [selectedWidth, selectedHeight] = size
@@ -53,7 +52,6 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
 
     const func = async () => {
       const response = await painter.init({
-        patternSrc: "src/assets/pattern.png",
         container: document.querySelector("#canvas") as HTMLDivElement,
         on: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
@@ -69,6 +67,7 @@ export default function Header({ setFlag, setModalOn, setCnt, size }) {
         cache: result,
         brushOption: {
           strokeWidth: 30,
+          strokeColor: "black",
         },
         containerSize: {
           width: 550,

@@ -77,21 +77,6 @@ export default function Tool({ mode, setMode, imgSrc }) {
           </div>
         </div>
         <br />
-        <div>
-          3) Selecting Brush Color :
-          <select
-            id="colorSelection"
-            defaultValue="white"
-            onChange={setStrokeColor}
-          >
-            <option value="white">white</option>
-            <option value="red">red</option>
-            <option value="blue">blue</option>
-            <option value="purple">purple</option>
-            <option value="orange">orange</option>
-            <option value="rgb(140,171,95)">lime green</option>
-          </select>
-        </div>
         <br />
         <div>
           2) Control Brush Size
